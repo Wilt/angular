@@ -223,8 +223,9 @@ export class HttpParams {
     this.init();
     return this.keys()
         .map(key => {
-          const eKey = this.encoder.encodeKey(key);
-          return this.map !.get(key) !.map(value => eKey + '=' + this.encoder.encodeValue(value))
+          const values = this.map !.get(key);
+          const eKey = values.length > 1 ? this.encoder.encodeKey(key)+'[]' : this.encoder.encodeKey(key);
+          return this.map values !.map(value => eKey + '=' + this.encoder.encodeValue(value))
               .join('&');
         })
         .join('&');
