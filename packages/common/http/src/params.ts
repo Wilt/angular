@@ -225,7 +225,7 @@ export class HttpParams {
         .map(key => {
           const values = this.map !.get(key);
           const eKey = values.length > 1 ? this.encoder.encodeKey(key)+'[]' : this.encoder.encodeKey(key);
-          return this.map values !.map(value => eKey + '=' + this.encoder.encodeValue(value))
+          return values !.map(value => eKey + '=' + this.encoder.encodeValue(value))
               .join('&');
         })
         .join('&');
