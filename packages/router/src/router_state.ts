@@ -96,9 +96,9 @@ export function createEmptyStateSnapshot(
  *
  * @publicApi
  */
-export class ActivatedRoute {
+export class ActivatedRoute<T extends Data = Data> {
   /** The current snapshot of this route */
-  snapshot !: ActivatedRouteSnapshot;
+  snapshot !: ActivatedRouteSnapshot<T>;
   /** @internal */
   _futureSnapshot: ActivatedRouteSnapshot;
   /** @internal */
@@ -119,7 +119,7 @@ export class ActivatedRoute {
       /** An observable of the URL fragment shared by all the routes. */
       public fragment: Observable<string>,
       /** An observable of the static and resolved data of this route. */
-      public data: Observable<Data>,
+      public data: Observable<T>,
       /** The outlet name of the route, a constant. */
       public outlet: string,
       /** The component of the route, a constant. */
@@ -246,7 +246,7 @@ function flattenInherited(pathFromRoot: ActivatedRouteSnapshot[]): Inherited {
  *
  * @publicApi
  */
-export class ActivatedRouteSnapshot {
+export class ActivatedRouteSnapshot<T extends Data = Data> {
   /** The configuration used to match this route **/
   public readonly routeConfig: Route|null;
   /** @internal **/
@@ -279,7 +279,7 @@ export class ActivatedRouteSnapshot {
       /** The URL fragment shared by all the routes */
       public fragment: string,
       /** The static and resolved data of this route */
-      public data: Data,
+      public data: T,
       /** The outlet name of the route */
       public outlet: string,
       /** The component of the route */
