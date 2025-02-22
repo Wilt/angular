@@ -122,7 +122,7 @@ export function createEmptyStateSnapshot(rootComponent: Type<any> | null): Route
  *
  * @publicApi
  */
-export class ActivatedRoute {
+export class ActivatedRoute<T extends Data = Data> {
   /** The current snapshot of this route */
   snapshot!: ActivatedRouteSnapshot;
   /** @internal */
@@ -146,7 +146,7 @@ export class ActivatedRoute {
   /** An observable of the URL fragment shared by all the routes. */
   public fragment: Observable<string | null>;
   /** An observable of the static and resolved data of this route. */
-  public data: Observable<Data>;
+  public data: Observable<T>;
 
   /** @internal */
   constructor(
@@ -318,7 +318,7 @@ export function getInherited(
  *
  * @publicApi
  */
-export class ActivatedRouteSnapshot {
+export class ActivatedRouteSnapshot<T extends Data = Data> {
   /** The configuration used to match this route **/
   public readonly routeConfig: Route | null;
   /** @internal */
@@ -368,7 +368,7 @@ export class ActivatedRouteSnapshot {
     /** The URL fragment shared by all the routes */
     public fragment: string | null,
     /** The static and resolved data of this route */
-    public data: Data,
+    public data: T,
     /** The outlet name of the route */
     public outlet: string,
     /** The component of the route */
