@@ -1,12 +1,10 @@
-
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-
 
 /**
  * Expresses a single CSS Selector.
@@ -74,7 +72,3 @@ export const enum SelectorFlags {
   /** Mode for matching class names */
   CLASS = 0b1000,
 }
-
-// Note: This hack is necessary so we don't erroneously get a circular dependency
-// failure based on types.
-export const unusedValueExportToPlacateAjd = 1;

@@ -1,16 +1,18 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {Location, LocationStrategy, PlatformLocation} from '@angular/common';
+import {ɵisPromise as isPromise} from '@angular/core';
 import {UpgradeModule} from '@angular/upgrade/static';
+import {ReplaySubject} from 'rxjs';
 
 import {UrlCodec} from './params';
-import {deepEqual, isAnchor, isPromise} from './utils';
+import {deepEqual, isAnchor} from './utils';
 
 const PATH_MATCH = /^([^?#]*)(\?([^#]*))?(#(.*))?$/;
 const DOUBLE_SLASH_REGEX = /^\s*[\\/]{2,}/;
@@ -18,7 +20,7 @@ const IGNORE_URI_REGEXP = /^\s*(javascript|mailto):/i;
 const DEFAULT_PORTS: {[key: string]: number} = {
   'http:': 80,
   'https:': 443,
-  'ftp:': 21
+  'ftp:': 21,
 };
 
 /**
@@ -30,31 +32,40 @@ const DEFAULT_PORTS: {[key: string]: number} = {
  * @publicApi
  */
 export class $locationShim {
-  private initalizing = true;
+  private initializing = true;
   private updateBrowser = false;
   private $$absUrl: string = '';
   private $$url: string = '';
   private $$protocol: string;
   private $$host: string = '';
-  private $$port: number|null;
+  private $$port: number | null;
   private $$replace: boolean = false;
   private $$path: string = '';
   private $$search: any = '';
   private $$hash: string = '';
   private $$state: unknown;
   private $$changeListeners: [
-    ((url: string, state: unknown, oldUrl: string, oldState: unknown, err?: (e: Error) => void) =>
-         void),
-    (e: Error) => void
+    (
+      url: string,
+      state: unknown,
+      oldUrl: string,
+      oldState: unknown,
+      err?: (e: Error) => void,
+    ) => void,
+    (e: Error) => void,
   ][] = [];
 
   private cachedState: unknown = null;
 
-
+  private urlChanges = new ReplaySubject<{newUrl: string; newState: unknown}>(1);
 
   constructor(
-      $injector: any, private location: Location, private platformLocation: PlatformLocation,
-      private urlCodec: UrlCodec, private locationStrategy: LocationStrategy) {
+    $injector: any,
+    private location: Location,
+    private platformLocation: PlatformLocation,
+    private urlCodec: UrlCodec,
+    private locationStrategy: LocationStrategy,
+  ) {
     const initialUrl = this.browserUrl();
 
     let parsedUrl = this.urlCodec.parse(initialUrl);
@@ -71,8 +82,12 @@ export class $locationShim {
     this.cacheState();
     this.$$state = this.browserState();
 
+    this.location.onUrlChange((newUrl, newState) => {
+      this.urlChanges.next({newUrl, newState});
+    });
+
     if (isPromise($injector)) {
-      $injector.then($i => this.initialize($i));
+      $injector.then(($i) => this.initialize($i));
     } else {
       this.initialize($injector);
     }
@@ -83,12 +98,17 @@ export class $locationShim {
     const $rootElement = $injector.get('$rootElement');
 
     $rootElement.on('click', (event: any) => {
-      if (event.ctrlKey || event.metaKey || event.shiftKey || event.which === 2 ||
-          event.button === 2) {
+      if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.which === 2 ||
+        event.button === 2
+      ) {
         return;
       }
 
-      let elm: (Node & ParentNode)|null = event.target;
+      let elm: (Node & ParentNode) | null = event.target;
 
       // traverse the DOM up to find first A tag
       while (elm && elm.nodeName.toLowerCase() !== 'a') {
@@ -124,15 +144,19 @@ export class $locationShim {
       }
     });
 
-    this.location.onUrlChange((newUrl, newState) => {
-      let oldUrl = this.absUrl();
-      let oldState = this.$$state;
+    this.urlChanges.subscribe(({newUrl, newState}) => {
+      const oldUrl = this.absUrl();
+      const oldState = this.$$state;
       this.$$parse(newUrl);
       newUrl = this.absUrl();
       this.$$state = newState;
-      const defaultPrevented =
-          $rootScope.$broadcast('$locationChangeStart', newUrl, oldUrl, newState, oldState)
-              .defaultPrevented;
+      const defaultPrevented = $rootScope.$broadcast(
+        '$locationChangeStart',
+        newUrl,
+        oldUrl,
+        newState,
+        oldState,
+      ).defaultPrevented;
 
       // if the location was changed by a `$locationChangeStart` handler then stop
       // processing this location change
@@ -146,7 +170,7 @@ export class $locationShim {
         this.setBrowserUrlWithFallback(oldUrl, false, oldState);
         this.$$notifyChangeListeners(this.url(), this.$$state, oldUrl, oldState);
       } else {
-        this.initalizing = false;
+        this.initializing = false;
         $rootScope.$broadcast('$locationChangeSuccess', newUrl, oldUrl, newState, oldState);
         this.resetBrowserUpdate();
       }
@@ -155,9 +179,12 @@ export class $locationShim {
       }
     });
 
-    // update browser
+    // Synchronize the browser's URL and state with the application.
+    // Note: There is no need to save the `$watch` return value (deregister listener)
+    // into a variable because `$scope.$$watchers` is automatically cleaned up when
+    // the root scope is destroyed.
     $rootScope.$watch(() => {
-      if (this.initalizing || this.updateBrowser) {
+      if (this.initializing || this.updateBrowser) {
         this.updateBrowser = false;
 
         const oldUrl = this.browserUrl();
@@ -166,22 +193,25 @@ export class $locationShim {
         let currentReplace = this.$$replace;
 
         const urlOrStateChanged =
-            !this.urlCodec.areEqual(oldUrl, newUrl) || oldState !== this.$$state;
+          !this.urlCodec.areEqual(oldUrl, newUrl) || oldState !== this.$$state;
 
         // Fire location changes one time to on initialization. This must be done on the
         // next tick (thus inside $evalAsync()) in order for listeners to be registered
         // before the event fires. Mimicing behavior from $locationWatch:
         // https://github.com/angular/angular.js/blob/master/src/ng/location.js#L983
-        if (this.initalizing || urlOrStateChanged) {
-          this.initalizing = false;
+        if (this.initializing || urlOrStateChanged) {
+          this.initializing = false;
 
           $rootScope.$evalAsync(() => {
             // Get the new URL again since it could have changed due to async update
             const newUrl = this.absUrl();
-            const defaultPrevented =
-                $rootScope
-                    .$broadcast('$locationChangeStart', newUrl, oldUrl, this.$$state, oldState)
-                    .defaultPrevented;
+            const defaultPrevented = $rootScope.$broadcast(
+              '$locationChangeStart',
+              newUrl,
+              oldUrl,
+              this.$$state,
+              oldState,
+            ).defaultPrevented;
 
             // if the location was changed by a `$locationChangeStart` handler then stop
             // processing this location change
@@ -191,15 +221,23 @@ export class $locationShim {
               this.$$parse(oldUrl);
               this.$$state = oldState;
             } else {
-              // This block doesn't run when initalizing because it's going to perform the update to
-              // the URL which shouldn't be needed when initalizing.
+              // This block doesn't run when initializing because it's going to perform the update
+              // to the URL which shouldn't be needed when initializing.
               if (urlOrStateChanged) {
                 this.setBrowserUrlWithFallback(
-                    newUrl, currentReplace, oldState === this.$$state ? null : this.$$state);
+                  newUrl,
+                  currentReplace,
+                  oldState === this.$$state ? null : this.$$state,
+                );
                 this.$$replace = false;
               }
               $rootScope.$broadcast(
-                  '$locationChangeSuccess', newUrl, oldUrl, this.$$state, oldState);
+                '$locationChangeSuccess',
+                newUrl,
+                oldUrl,
+                this.$$state,
+                oldState,
+              );
               if (urlOrStateChanged) {
                 this.$$notifyChangeListeners(this.url(), this.$$state, oldUrl, oldState);
               }
@@ -208,6 +246,14 @@ export class $locationShim {
         }
       }
       this.$$replace = false;
+    });
+
+    $rootScope.$on('$destroy', () => {
+      // Complete the subject to release all active observers when the root
+      // scope is destroyed. Before this change, we subscribed to the `urlChanges`
+      // subject, and the subscriber captured `this`, leading to a memory leak
+      // after the root scope was destroyed.
+      this.urlChanges.complete();
     });
   }
 
@@ -286,11 +332,13 @@ export class $locationShim {
    * This function emulates the $browser.state() function from AngularJS. It will cause
    * history.state to be cached unless changed with deep equality check.
    */
-  private browserState(): unknown { return this.cachedState; }
+  private browserState(): unknown {
+    return this.cachedState;
+  }
 
   private stripBaseUrl(base: string, url: string) {
     if (url.startsWith(base)) {
-      return url.substr(base.length);
+      return url.slice(base.length);
     }
     return undefined;
   }
@@ -307,7 +355,7 @@ export class $locationShim {
       throw new Error(`Bad Path - URL cannot start with double slashes: ${url}`);
     }
 
-    let prefixed = (url.charAt(0) !== '/');
+    let prefixed = url.charAt(0) !== '/';
     if (prefixed) {
       url = '/' + url;
     }
@@ -316,7 +364,7 @@ export class $locationShim {
       throw new Error(`Bad URL - Cannot parse URL: ${url}`);
     }
     let path =
-        prefixed && match.pathname.charAt(0) === '/' ? match.pathname.substring(1) : match.pathname;
+      prefixed && match.pathname.charAt(0) === '/' ? match.pathname.substring(1) : match.pathname;
     this.$$path = this.urlCodec.decodePath(path);
     this.$$search = this.urlCodec.decodeSearch(match.search);
     this.$$hash = this.urlCodec.decodeHash(match.hash);
@@ -341,19 +389,24 @@ export class $locationShim {
    * @param err The callback function that is triggered when an error occurs.
    */
   onChange(
-      fn: (url: string, state: unknown, oldUrl: string, oldState: unknown) => void,
-      err: (e: Error) => void = (e: Error) => {}) {
+    fn: (url: string, state: unknown, oldUrl: string, oldState: unknown) => void,
+    err: (e: Error) => void = (e: Error) => {},
+  ) {
     this.$$changeListeners.push([fn, err]);
   }
 
   /** @internal */
   $$notifyChangeListeners(
-      url: string = '', state: unknown, oldUrl: string = '', oldState: unknown) {
+    url: string = '',
+    state: unknown,
+    oldUrl: string = '',
+    oldState: unknown,
+  ) {
     this.$$changeListeners.forEach(([fn, err]) => {
       try {
         fn(url, state, oldUrl, oldState);
       } catch (e) {
-        err(e);
+        err(e as Error);
       }
     });
   }
@@ -364,7 +417,7 @@ export class $locationShim {
    * @param url The URL string.
    */
   $$parse(url: string) {
-    let pathUrl: string|undefined;
+    let pathUrl: string | undefined;
     if (url.startsWith('/')) {
       pathUrl = url;
     } else {
@@ -377,9 +430,7 @@ export class $locationShim {
 
     this.parseAppUrl(pathUrl);
 
-    if (!this.$$path) {
-      this.$$path = '/';
-    }
+    this.$$path ||= '/';
     this.composeUrls();
   }
 
@@ -389,7 +440,7 @@ export class $locationShim {
    * @param url The full URL string.
    * @param relHref A URL string relative to the full URL string.
    */
-  $$parseLinkUrl(url: string, relHref?: string|null): boolean {
+  $$parseLinkUrl(url: string, relHref?: string | null): boolean {
     // When relHref is passed, it should be a hash and is handled separately
     if (relHref && relHref[0] === '#') {
       this.hash(relHref.slice(1));
@@ -430,14 +481,14 @@ export class $locationShim {
 
   private composeUrls() {
     this.$$url = this.urlCodec.normalize(this.$$path, this.$$search, this.$$hash);
-    this.$$absUrl = this.getServerBase() + this.$$url.substr(1);  // remove '/' from front of URL
+    this.$$absUrl = this.getServerBase() + this.$$url.slice(1); // remove '/' from front of URL
     this.updateBrowser = true;
   }
 
   /**
    * Retrieves the full URL representation with all segments encoded according to
    * rules specified in
-   * [RFC 3986](http://www.ietf.org/rfc/rfc3986.txt).
+   * [RFC 3986](https://tools.ietf.org/html/rfc3986).
    *
    *
    * ```js
@@ -446,7 +497,9 @@ export class $locationShim {
    * // => "http://example.com/#/some/path?foo=bar&baz=xoxo"
    * ```
    */
-  absUrl(): string { return this.$$absUrl; }
+  absUrl(): string {
+    return this.$$absUrl;
+  }
 
   /**
    * Retrieves the current URL, or sets a new URL. When setting a URL,
@@ -460,7 +513,7 @@ export class $locationShim {
    */
   url(): string;
   url(url: string): this;
-  url(url?: string): string|this {
+  url(url?: string): string | this {
     if (typeof url === 'string') {
       if (!url.length) {
         url = '/';
@@ -488,7 +541,9 @@ export class $locationShim {
    * // => "http"
    * ```
    */
-  protocol(): string { return this.$$protocol; }
+  protocol(): string {
+    return this.$$protocol;
+  }
 
   /**
    * Retrieves the protocol of the current URL.
@@ -509,7 +564,9 @@ export class $locationShim {
    * // => "example.com:8080"
    * ```
    */
-  host(): string { return this.$$host; }
+  host(): string {
+    return this.$$host;
+  }
 
   /**
    * Retrieves the port of the current URL.
@@ -520,7 +577,9 @@ export class $locationShim {
    * // => 80
    * ```
    */
-  port(): number|null { return this.$$port; }
+  port(): number | null {
+    return this.$$port;
+  }
 
   /**
    * Retrieves the path of the current URL, or changes the path and returns a reference to its own
@@ -536,8 +595,8 @@ export class $locationShim {
    * ```
    */
   path(): string;
-  path(path: string|number|null): this;
-  path(path?: string|number|null): string|this {
+  path(path: string | number | null): this;
+  path(path?: string | number | null): string | this {
     if (typeof path === 'undefined') {
       return this.$$path;
     }
@@ -553,7 +612,7 @@ export class $locationShim {
   }
 
   /**
-   * Retrieves a map of the search parameters of the current URL, or changes a search 
+   * Retrieves a map of the search parameters of the current URL, or changes a search
    * part and returns a reference to its own instance.
    *
    *
@@ -576,7 +635,8 @@ export class $locationShim {
    * If the argument is a hash object containing an array of values, these values will be encoded
    * as duplicate search parameters in the URL.
    *
-   * @param {(string|Number|Array<string>|boolean)=} paramValue If `search` is a string or number, then `paramValue`
+   * @param {(string|Number|Array<string>|boolean)=} paramValue If `search` is a string or number,
+   *     then `paramValue`
    * will override only a single search property.
    *
    * If `paramValue` is an array, it will override the property of the `search` component of
@@ -590,13 +650,15 @@ export class $locationShim {
    * @return {Object} The parsed `search` object of the current URL, or the changed `search` object.
    */
   search(): {[key: string]: unknown};
-  search(search: string|number|{[key: string]: unknown}): this;
+  search(search: string | number | {[key: string]: unknown}): this;
   search(
-      search: string|number|{[key: string]: unknown},
-      paramValue: null|undefined|string|number|boolean|string[]): this;
+    search: string | number | {[key: string]: unknown},
+    paramValue: null | undefined | string | number | boolean | string[],
+  ): this;
   search(
-      search?: string|number|{[key: string]: unknown},
-      paramValue?: null|undefined|string|number|boolean|string[]): {[key: string]: unknown}|this {
+    search?: string | number | {[key: string]: unknown},
+    paramValue?: null | undefined | string | number | boolean | string[],
+  ): {[key: string]: unknown} | this {
     switch (arguments.length) {
       case 0:
         return this.$$search;
@@ -614,7 +676,8 @@ export class $locationShim {
           this.$$search = search;
         } else {
           throw new Error(
-              'LocationProvider.search(): First argument must be a string or an object.');
+            'LocationProvider.search(): First argument must be a string or an object.',
+          );
         }
         break;
       default:
@@ -644,8 +707,8 @@ export class $locationShim {
    * ```
    */
   hash(): string;
-  hash(hash: string|number|null): this;
-  hash(hash?: string|number|null): string|this {
+  hash(hash: string | number | null): this;
+  hash(hash?: string | number | null): string | this {
     if (typeof hash === 'undefined') {
       return this.$$hash;
     }
@@ -673,12 +736,12 @@ export class $locationShim {
    *
    * This method is supported only in HTML5 mode and only in browsers supporting
    * the HTML5 History API methods such as `pushState` and `replaceState`. If you need to support
-   * older browsers (like IE9 or Android < 4.0), don't use this method.
+   * older browsers (like Android < 4.0), don't use this method.
    *
    */
   state(): unknown;
   state(state: unknown): this;
-  state(state?: unknown): unknown|this {
+  state(state?: unknown): unknown | this {
     if (typeof state === 'undefined') {
       return this.$$state;
     }
@@ -690,23 +753,30 @@ export class $locationShim {
 
 /**
  * The factory function used to create an instance of the `$locationShim` in Angular,
- * and provides an API-compatiable `$locationProvider` for AngularJS.
+ * and provides an API-compatible `$locationProvider` for AngularJS.
  *
  * @publicApi
  */
 export class $locationShimProvider {
   constructor(
-      private ngUpgrade: UpgradeModule, private location: Location,
-      private platformLocation: PlatformLocation, private urlCodec: UrlCodec,
-      private locationStrategy: LocationStrategy) {}
+    private ngUpgrade: UpgradeModule,
+    private location: Location,
+    private platformLocation: PlatformLocation,
+    private urlCodec: UrlCodec,
+    private locationStrategy: LocationStrategy,
+  ) {}
 
   /**
    * Factory method that returns an instance of the $locationShim
    */
   $get() {
     return new $locationShim(
-        this.ngUpgrade.$injector, this.location, this.platformLocation, this.urlCodec,
-        this.locationStrategy);
+      this.ngUpgrade.$injector,
+      this.location,
+      this.platformLocation,
+      this.urlCodec,
+      this.locationStrategy,
+    );
   }
 
   /**

@@ -1,20 +1,21 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-import {scheduleMicroTask} from '../util';
 
 /**
  * Provides programmatic control of a reusable animation sequence,
- * built using the `build()` method of `AnimationBuilder`. The `build()` method
- * returns a factory, whose `create()` method instantiates and initializes this interface.
+ * built using the <code>[AnimationBuilder.build](api/animations/AnimationBuilder#build)()</code>
+ * method which returns an `AnimationFactory`, whose
+ * <code>[create](api/animations/AnimationFactory#create)()</code> method instantiates and
+ * initializes this interface.
  *
- * @see `AnimationBuilder`
- * @see `AnimationFactory`
- * @see `animate()`
+ * @see {@link AnimationBuilder}
+ * @see {@link AnimationFactory}
+ * @see {@link animate}
  *
  * @publicApi
  */
@@ -22,20 +23,20 @@ export interface AnimationPlayer {
   /**
    * Provides a callback to invoke when the animation finishes.
    * @param fn The callback function.
-   * @see `finish()`
+   * @see {@link #finish}
    */
   onDone(fn: () => void): void;
   /**
    * Provides a callback to invoke when the animation starts.
    * @param fn The callback function.
-   * @see `run()`
+   * @see {@link #play}
    */
   onStart(fn: () => void): void;
   /**
    * Provides a callback to invoke after the animation is destroyed.
    * @param fn The callback function.
-   * @see `destroy()`
-   * @see `beforeDestroy()`
+   * @see {@link #destroy}
+   * @see {@link #beforeDestroy}
    */
   onDestroy(fn: () => void): void;
   /**
@@ -74,18 +75,18 @@ export interface AnimationPlayer {
   reset(): void;
   /**
    * Sets the position of the animation.
-   * @param position A 0-based offset into the duration, in milliseconds.
+   * @param position A fractional value, representing the progress through the animation.
    */
-  setPosition(position: any /** TODO #9100 */): void;
+  setPosition(position: number): void;
   /**
    * Reports the current position of the animation.
-   * @returns A 0-based offset into the duration, in milliseconds.
+   * @returns A fractional value, representing the progress through the animation.
    */
   getPosition(): number;
   /**
    * The parent of this player, if any.
    */
-  parentPlayer: AnimationPlayer|null;
+  parentPlayer: AnimationPlayer | null;
   /**
    * The total run time of the animation, in milliseconds.
    */
@@ -94,11 +95,13 @@ export interface AnimationPlayer {
    * Provides a callback to invoke before the animation is destroyed.
    */
   beforeDestroy?: () => any;
-  /** @internal
+  /**
+   * @internal
    * Internal
    */
   triggerCallback?: (phaseName: string) => void;
-  /** @internal
+  /**
+   * @internal
    * Internal
    */
   disabled?: boolean;
@@ -109,9 +112,8 @@ export interface AnimationPlayer {
  * Used internally when animations are disabled, to avoid
  * checking for the null case when an animation player is expected.
  *
- * @see `animate()`
- * @see `AnimationPlayer`
- * @see `GroupPlayer`
+ * @see {@link animate}
+ * @see {@link AnimationPlayer}
  *
  * @publicApi
  */
@@ -119,23 +121,38 @@ export class NoopAnimationPlayer implements AnimationPlayer {
   private _onDoneFns: Function[] = [];
   private _onStartFns: Function[] = [];
   private _onDestroyFns: Function[] = [];
+  private _originalOnDoneFns: Function[] = [];
+  private _originalOnStartFns: Function[] = [];
   private _started = false;
   private _destroyed = false;
   private _finished = false;
-  public parentPlayer: AnimationPlayer|null = null;
+  private _position = 0;
+  public parentPlayer: AnimationPlayer | null = null;
   public readonly totalTime: number;
-  constructor(duration: number = 0, delay: number = 0) { this.totalTime = duration + delay; }
+  constructor(duration: number = 0, delay: number = 0) {
+    this.totalTime = duration + delay;
+  }
   private _onFinish() {
     if (!this._finished) {
       this._finished = true;
-      this._onDoneFns.forEach(fn => fn());
+      this._onDoneFns.forEach((fn) => fn());
       this._onDoneFns = [];
     }
   }
-  onStart(fn: () => void): void { this._onStartFns.push(fn); }
-  onDone(fn: () => void): void { this._onDoneFns.push(fn); }
-  onDestroy(fn: () => void): void { this._onDestroyFns.push(fn); }
-  hasStarted(): boolean { return this._started; }
+  onStart(fn: () => void): void {
+    this._originalOnStartFns.push(fn);
+    this._onStartFns.push(fn);
+  }
+  onDone(fn: () => void): void {
+    this._originalOnDoneFns.push(fn);
+    this._onDoneFns.push(fn);
+  }
+  onDestroy(fn: () => void): void {
+    this._onDestroyFns.push(fn);
+  }
+  hasStarted(): boolean {
+    return this._started;
+  }
   init(): void {}
   play(): void {
     if (!this.hasStarted()) {
@@ -146,16 +163,20 @@ export class NoopAnimationPlayer implements AnimationPlayer {
   }
 
   /** @internal */
-  triggerMicrotask() { scheduleMicroTask(() => this._onFinish()); }
+  triggerMicrotask() {
+    queueMicrotask(() => this._onFinish());
+  }
 
   private _onStart() {
-    this._onStartFns.forEach(fn => fn());
+    this._onStartFns.forEach((fn) => fn());
     this._onStartFns = [];
   }
 
   pause(): void {}
   restart(): void {}
-  finish(): void { this._onFinish(); }
+  finish(): void {
+    this._onFinish();
+  }
   destroy(): void {
     if (!this._destroyed) {
       this._destroyed = true;
@@ -163,18 +184,27 @@ export class NoopAnimationPlayer implements AnimationPlayer {
         this._onStart();
       }
       this.finish();
-      this._onDestroyFns.forEach(fn => fn());
+      this._onDestroyFns.forEach((fn) => fn());
       this._onDestroyFns = [];
     }
   }
-  reset(): void {}
-  setPosition(position: number): void {}
-  getPosition(): number { return 0; }
+  reset(): void {
+    this._started = false;
+    this._finished = false;
+    this._onStartFns = this._originalOnStartFns;
+    this._onDoneFns = this._originalOnDoneFns;
+  }
+  setPosition(position: number): void {
+    this._position = this.totalTime ? position * this.totalTime : 1;
+  }
+  getPosition(): number {
+    return this.totalTime ? this._position / this.totalTime : 1;
+  }
 
   /** @internal */
   triggerCallback(phaseName: string): void {
     const methods = phaseName == 'start' ? this._onStartFns : this._onDoneFns;
-    methods.forEach(fn => fn());
+    methods.forEach((fn) => fn());
     methods.length = 0;
   }
 }

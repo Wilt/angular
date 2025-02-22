@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {Component, NgModule} from '@angular/core';
@@ -12,18 +12,28 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
 import {Store, Todo, TodoFactory} from './app/TodoStore';
 
-@Component({selector: 'todo-app', viewProviders: [Store, TodoFactory], templateUrl: 'todo.html'})
+@Component({
+  selector: 'todo-app',
+  viewProviders: [Store, TodoFactory],
+  templateUrl: 'todo.html',
+  standalone: false,
+})
 export class TodoApp {
   todoEdit: Todo = null;
 
-  constructor(public todoStore: Store<Todo>, public factory: TodoFactory) {}
+  constructor(
+    public todoStore: Store<Todo>,
+    public factory: TodoFactory,
+  ) {}
 
   enterTodo(inputElement: HTMLInputElement): void {
     this.addTodo(inputElement.value);
     inputElement.value = '';
   }
 
-  editTodo(todo: Todo): void { this.todoEdit = todo; }
+  editTodo(todo: Todo): void {
+    this.todoEdit = todo;
+  }
 
   doneEditing($event: KeyboardEvent, todo: Todo): void {
     const which = $event.which;
@@ -37,22 +47,31 @@ export class TodoApp {
     }
   }
 
-  addTodo(newTitle: string): void { this.todoStore.add(this.factory.create(newTitle, false)); }
+  addTodo(newTitle: string): void {
+    this.todoStore.add(this.factory.create(newTitle, false));
+  }
 
-  completeMe(todo: Todo): void { todo.completed = !todo.completed; }
+  completeMe(todo: Todo): void {
+    todo.completed = !todo.completed;
+  }
 
-  deleteMe(todo: Todo): void { this.todoStore.remove(todo); }
+  deleteMe(todo: Todo): void {
+    this.todoStore.remove(todo);
+  }
 
   toggleAll($event: MouseEvent): void {
     const isComplete = ($event.target as HTMLInputElement).checked;
-    this.todoStore.list.forEach((todo: Todo) => { todo.completed = isComplete; });
+    this.todoStore.list.forEach((todo: Todo) => {
+      todo.completed = isComplete;
+    });
   }
 
-  clearCompleted(): void { this.todoStore.removeBy((todo: Todo) => todo.completed); }
+  clearCompleted(): void {
+    this.todoStore.removeBy((todo: Todo) => todo.completed);
+  }
 }
 
 @NgModule({declarations: [TodoApp], bootstrap: [TodoApp], imports: [BrowserModule]})
-export class ExampleModule {
-}
+export class ExampleModule {}
 
 platformBrowserDynamic().bootstrapModule(ExampleModule);

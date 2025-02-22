@@ -2,30 +2,35 @@
   "name": "@angular/core",
   "version": "0.0.0-PLACEHOLDER",
   "description": "Angular - the core framework",
-  "main": "./bundles/core.umd.js",
-  "module": "./fesm5/core.js",
-  "es2015": "./fesm2015/core.js",
-  "esm5": "./esm5/core.js",
-  "esm2015": "./esm2015/core.js",
-  "fesm5": "./fesm5/core.js",
-  "fesm2015": "./fesm2015/core.js",
-  "typings": "./core.d.ts",
   "author": "angular",
   "license": "MIT",
+  "engines": {
+    "node": "^18.19.1 || ^20.11.1 || >=22.0.0"
+  },
+  "exports": {
+    "./schematics/*": {
+      "default": "./schematics/*.js"
+    },
+    "./event-dispatch-contract.min.js": {
+      "default": "./event-dispatch-contract.min.js"
+    }
+  },
   "dependencies": {
-    "tslib": "^1.9.0"
+    "tslib": "^2.3.0"
   },
   "peerDependencies": {
-    "rxjs": "^6.4.0",
-    "zone.js": "~0.9.1"
+    "rxjs": "^6.5.3 || ^7.4.0",
+    "zone.js": "~0.15.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/angular/angular.git"
+    "url": "https://github.com/angular/angular.git",
+    "directory": "packages/core"
   },
   "ng-update": {
     "migrations": "./schematics/migrations.json",
     "packageGroup": "NG_UPDATE_PACKAGE_GROUP"
   },
+  "schematics": "./schematics/collection.json",
   "sideEffects": false
 }

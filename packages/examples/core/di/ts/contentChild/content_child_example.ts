@@ -1,27 +1,29 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 // #docregion Component
 import {Component, ContentChild, Directive, Input} from '@angular/core';
 
-@Directive({selector: 'pane'})
+@Directive({
+  selector: 'pane',
+  standalone: false,
+})
 export class Pane {
-  @Input() id !: string;
+  @Input() id!: string;
 }
 
 @Component({
   selector: 'tab',
-  template: `
-    <div>pane: {{pane?.id}}</div>
-  `
+  template: ` <div>pane: {{ pane?.id }}</div> `,
+  standalone: false,
 })
 export class Tab {
-  @ContentChild(Pane, {static: false}) pane !: Pane;
+  @ContentChild(Pane) pane!: Pane;
 }
 
 @Component({
@@ -34,10 +36,13 @@ export class Tab {
 
     <button (click)="toggle()">Toggle</button>
   `,
+  standalone: false,
 })
 export class ContentChildComp {
   shouldShow = true;
 
-  toggle() { this.shouldShow = !this.shouldShow; }
+  toggle() {
+    this.shouldShow = !this.shouldShow;
+  }
 }
 // #enddocregion

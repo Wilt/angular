@@ -1,17 +1,20 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 // #docregion Component
 import {AfterViewInit, Component, Directive, Input, QueryList, ViewChildren} from '@angular/core';
 
-@Directive({selector: 'pane'})
+@Directive({
+  selector: 'pane',
+  standalone: false,
+})
 export class Pane {
-  @Input() id !: string;
+  @Input() id!: string;
 }
 
 @Component({
@@ -23,24 +26,31 @@ export class Pane {
 
     <button (click)="show()">Show 3</button>
 
-    <div>panes: {{serializedPanes}}</div>
+    <div>panes: {{ serializedPanes }}</div>
   `,
+  standalone: false,
 })
 export class ViewChildrenComp implements AfterViewInit {
-  @ViewChildren(Pane) panes !: QueryList<Pane>;
+  @ViewChildren(Pane) panes!: QueryList<Pane>;
   serializedPanes: string = '';
 
   shouldShow = false;
 
-  show() { this.shouldShow = true; }
+  show() {
+    this.shouldShow = true;
+  }
 
   ngAfterViewInit() {
     this.calculateSerializedPanes();
-    this.panes.changes.subscribe((r) => { this.calculateSerializedPanes(); });
+    this.panes.changes.subscribe((r) => {
+      this.calculateSerializedPanes();
+    });
   }
 
   calculateSerializedPanes() {
-    setTimeout(() => { this.serializedPanes = this.panes.map(p => p.id).join(', '); }, 0);
+    setTimeout(() => {
+      this.serializedPanes = this.panes.map((p) => p.id).join(', ');
+    }, 0);
   }
 }
 // #enddocregion

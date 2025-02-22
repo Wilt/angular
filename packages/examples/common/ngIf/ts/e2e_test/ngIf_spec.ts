@@ -1,13 +1,13 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import {modifiedInIvy} from '@angular/private/testing';
-import {$, ExpectedConditions, browser, by, element} from 'protractor';
+import {$, browser, by, element, ExpectedConditions} from 'protractor';
+
 import {verifyNoBrowserErrors} from '../../../../test-utils';
 
 function waitForElement(selector: string) {
@@ -38,8 +38,9 @@ describe('ngIf', () => {
       waitForElement(comp);
       expect(element.all(by.css(comp)).get(0).getText()).toEqual('hide show = true\nText to show');
       element(by.css(comp + ' button')).click();
-      expect(element.all(by.css(comp)).get(0).getText())
-          .toEqual('show show = false\nAlternate text while primary text is hidden');
+      expect(element.all(by.css(comp)).get(0).getText()).toEqual(
+        'show show = false\nAlternate text while primary text is hidden',
+      );
     });
   });
 
@@ -49,24 +50,34 @@ describe('ngIf', () => {
     it('should hide/show content', () => {
       browser.get(URL);
       waitForElement(comp);
-      expect(element.all(by.css(comp)).get(0).getText())
-          .toEqual('hideSwitch Primary show = true\nPrimary text to show');
-      element.all(by.css(comp + ' button')).get(1).click();
-      expect(element.all(by.css(comp)).get(0).getText())
-          .toEqual('hideSwitch Primary show = true\nSecondary text to show');
-      element.all(by.css(comp + ' button')).get(0).click();
-      expect(element.all(by.css(comp)).get(0).getText())
-          .toEqual('showSwitch Primary show = false\nAlternate text while primary text is hidden');
+      expect(element.all(by.css(comp)).get(0).getText()).toEqual(
+        'hideSwitch Primary show = true\nPrimary text to show',
+      );
+      element
+        .all(by.css(comp + ' button'))
+        .get(1)
+        .click();
+      expect(element.all(by.css(comp)).get(0).getText()).toEqual(
+        'hideSwitch Primary show = true\nSecondary text to show',
+      );
+      element
+        .all(by.css(comp + ' button'))
+        .get(0)
+        .click();
+      expect(element.all(by.css(comp)).get(0).getText()).toEqual(
+        'showSwitch Primary show = false\nAlternate text while primary text is hidden',
+      );
     });
   });
 
-  describe('ng-if-let', () => {
-    let comp = 'ng-if-let';
+  describe('ng-if-as', () => {
+    let comp = 'ng-if-as';
     it('should hide/show content', () => {
       browser.get(URL);
       waitForElement(comp);
-      expect(element.all(by.css(comp)).get(0).getText())
-          .toEqual('Next User\nWaiting... (user is null)');
+      expect(element.all(by.css(comp)).get(0).getText()).toEqual(
+        'Next User\nWaiting... (user is null)',
+      );
       element(by.css(comp + ' button')).click();
       expect(element.all(by.css(comp)).get(0).getText()).toEqual('Next User\nHello Smith, John!');
     });

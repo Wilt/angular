@@ -1,23 +1,20 @@
-package(default_visibility = ["//visibility:public"])
+load("//tools:defaults.bzl", "app_bundle", "ts_library")
+load("@npm//@angular/build-tooling/bazel/map-size-tracking:index.bzl", "js_mapping_size_test")
 
-load("//tools:defaults.bzl", "ng_rollup_bundle", "ts_library")
-load("//tools/size-tracking:index.bzl", "js_size_tracking_test")
+package(default_visibility = ["//visibility:public"])
 
 ts_library(
     name = "core_all",
     srcs = ["index.ts"],
-    tags = ["ivy-only"],
+    tags = [],
     deps = [
         "//packages/core",
     ],
 )
 
-ng_rollup_bundle(
+app_bundle(
     name = "bundle",
     entry_point = ":index.ts",
-    tags = [
-        "ivy-only",
-    ],
     deps = [
         ":core_all",
         "//packages/core",
@@ -25,19 +22,14 @@ ng_rollup_bundle(
     ],
 )
 
-js_size_tracking_test(
+js_mapping_size_test(
     name = "size_test",
-    src = "angular/packages/core/test/bundling/core_all/bundle.min.js",
-    data = [
-        ":bundle",
-        ":bundle.golden_size_map.json",
-    ],
-    goldenFile = "angular/packages/core/test/bundling/core_all/bundle.golden_size_map.json",
-    maxByteDiff = 250,
-    maxPercentageDiff = 15,
-    sourceMap = "angular/packages/core/test/bundling/core_all/bundle.min.js.map",
+    src = ":bundle.min.js",
+    golden_file = ":bundle.golden_size_map.json",
+    max_byte_diff = 250,
+    max_percentage_diff = 15,
+    source_map = ":bundle.min.js.map",
     tags = [
-        "ivy-only",
         "manual",
     ],
 )

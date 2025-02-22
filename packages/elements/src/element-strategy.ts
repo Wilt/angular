@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-import {ComponentFactory, Injector} from '@angular/core';
+import {Injector} from '@angular/core';
 import {Observable} from 'rxjs';
 
 /**
@@ -30,7 +30,7 @@ export interface NgElementStrategy {
   connect(element: HTMLElement): void;
   disconnect(): void;
   getInputValue(propName: string): any;
-  setInputValue(propName: string, value: string): void;
+  setInputValue(propName: string, value: string, transform?: (value: any) => any): void;
 }
 
 /**

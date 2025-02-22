@@ -1,21 +1,20 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 import {SimpleChanges} from './simple_change';
-
 
 /**
  * @description
  * A lifecycle hook that is called when any data-bound property of a directive changes.
  * Define an `ngOnChanges()` method to handle the changes.
  *
- * @see `DoCheck`
- * @see `OnInit`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link DoCheck}
+ * @see {@link OnInit}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface to
@@ -42,8 +41,8 @@ export interface OnChanges {
  * all data-bound properties of a directive.
  * Define an `ngOnInit()` method to handle any additional initialization tasks.
  *
- * @see `AfterContentInit`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link AfterContentInit}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface to
@@ -77,8 +76,8 @@ export interface OnInit {
  * Typically, you should not use both `DoCheck` and `OnChanges` to respond to
  * changes on the same input.
  *
- * @see `OnChanges`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link OnChanges}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface
@@ -86,16 +85,19 @@ export interface OnInit {
  *
  * {@example core/ts/metadata/lifecycle_hooks_spec.ts region='DoCheck'}
  *
+ * For a more complete example and discussion, see
+ * [Defining custom change detection](guide/components/lifecycle#defining-custom-change-detection).
+ *
  * @publicApi
  */
 export interface DoCheck {
   /**
-     * A callback method that performs change-detection, invoked
-     * after the default change-detector runs.
-     * See `KeyValueDiffers` and `IterableDiffers` for implementing
-     * custom change checking for collections.
-     *
-     */
+   * A callback method that performs change-detection, invoked
+   * after the default change-detector runs.
+   * See `KeyValueDiffers` and `IterableDiffers` for implementing
+   * custom change checking for collections.
+   *
+   */
   ngDoCheck(): void;
 }
 
@@ -103,7 +105,7 @@ export interface DoCheck {
  * A lifecycle hook that is called when a directive, pipe, or service is destroyed.
  * Use for any custom cleanup that needs to occur when the
  * instance is destroyed.
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface
@@ -116,7 +118,7 @@ export interface DoCheck {
 export interface OnDestroy {
   /**
    * A callback method that performs custom clean-up, invoked immediately
-   * after a directive, pipe, or service instance is destroyed.
+   * before a directive, pipe, or service instance is destroyed.
    */
   ngOnDestroy(): void;
 }
@@ -124,12 +126,12 @@ export interface OnDestroy {
 /**
  * @description
  * A lifecycle hook that is called after Angular has fully initialized
- * all content of a directive.
+ * all content of a directive. It will run only once when the projected content is initialized.
  * Define an `ngAfterContentInit()` method to handle any additional initialization tasks.
  *
- * @see `OnInit`
- * @see `AfterViewInit`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link OnInit}
+ * @see {@link AfterViewInit}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface to
@@ -152,10 +154,11 @@ export interface AfterContentInit {
 /**
  * @description
  * A lifecycle hook that is called after the default change detector has
- * completed checking all content of a directive.
+ * completed checking all content of a directive. It will run after the content
+ * has been checked and most of the time it's during a change detection cycle.
  *
- * @see `AfterViewChecked`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link AfterViewChecked}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface to
@@ -180,9 +183,9 @@ export interface AfterContentChecked {
  * a component's view.
  * Define an `ngAfterViewInit()` method to handle any additional initialization tasks.
  *
- * @see `OnInit`
- * @see `AfterContentInit`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link OnInit}
+ * @see {@link AfterContentInit}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface to
@@ -207,8 +210,8 @@ export interface AfterViewInit {
  * A lifecycle hook that is called after the default change detector has
  * completed checking a component's view for changes.
  *
- * @see `AfterContentChecked`
- * @see [Lifecycle Hooks](guide/lifecycle-hooks#onchanges) guide
+ * @see {@link AfterContentChecked}
+ * @see [Lifecycle hooks guide](guide/components/lifecycle)
  *
  * @usageNotes
  * The following snippet shows how a component can implement this interface to

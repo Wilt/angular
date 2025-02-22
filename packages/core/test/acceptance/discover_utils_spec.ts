@@ -1,23 +1,48 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 import {CommonModule} from '@angular/common';
-import {Component, Directive, InjectionToken, ViewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Directive,
+  InjectionToken,
+  Input,
+  Output,
+  ViewChild,
+  ViewEncapsulation,
+} from '@angular/core';
+import {EventEmitter} from '@angular/core/src/event_emitter';
+import {isLView} from '@angular/core/src/render3/interfaces/type_checks';
+import {CONTEXT} from '@angular/core/src/render3/interfaces/view';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {onlyInIvy} from '@angular/private/testing';
 
-import {getHostElement, markDirty} from '../../src/render3/index';
-import {getComponent, getContext, getDirectives, getInjectionTokens, getInjector, getListeners, getLocalRefs, getRootComponents, getViewComponent, loadLContext} from '../../src/render3/util/discovery_utils';
+import {getLContext} from '../../src/render3/context_discovery';
+import {getHostElement} from '../../src/render3/index';
+import {
+  ComponentDebugMetadata,
+  getComponent,
+  getComponentLView,
+  getContext,
+  getDirectiveMetadata,
+  getDirectives,
+  getInjectionTokens,
+  getInjector,
+  getListeners,
+  getLocalRefs,
+  getOwningComponent,
+  getRootComponents,
+} from '../../src/render3/util/discovery_utils';
 
-onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
+describe('discovery utils', () => {
   let fixture: ComponentFixture<MyApp>;
   let myApp: MyApp;
   let dirA: DirectiveA[];
-  let childComponent: DirectiveA[];
+  let childComponent: (DirectiveA | Child)[];
   let child: NodeListOf<Element>;
   let span: NodeListOf<Element>;
   let div: NodeListOf<Element>;
@@ -31,7 +56,7 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
     TestBed.configureTestingModule({
       imports: [CommonModule],
       declarations: [MyApp, DirectiveA, Child],
-      providers: [{provide: String, useValue: 'Module'}]
+      providers: [{provide: String, useValue: 'Module'}],
     });
     fixture = TestBed.createComponent(MyApp);
     fixture.detectChanges();
@@ -41,33 +66,57 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
     p = fixture.nativeElement.querySelectorAll('p');
   });
 
-  @Component(
-      {selector: 'child', template: '<p></p>', providers: [{provide: String, useValue: 'Child'}]})
+  @Component({
+    selector: 'child',
+    template: '<p></p>',
+    providers: [{provide: String, useValue: 'Child'}],
+    standalone: false,
+  })
   class Child {
-    constructor() { childComponent.push(this); }
+    constructor() {
+      childComponent.push(this);
+    }
   }
 
-  @Directive({selector: '[dirA]', exportAs: 'dirA'})
+  @Directive({
+    selector: '[dirA]',
+    exportAs: 'dirA',
+    standalone: false,
+  })
   class DirectiveA {
-    constructor() { dirA.push(this); }
+    @Input('a') b = 2;
+    @Output('c') d = new EventEmitter();
+    constructor() {
+      dirA.push(this);
+    }
   }
 
   @Component({
     selector: 'my-app',
     template: `
-      <span (click)="log($event)">{{text}}</span>
+      <span (click)="log($event)" *ngIf="spanVisible">{{text}}</span>
       <div dirA #div #foo="dirA"></div>
       <child></child>
       <child dirA #child></child>
-      <child dirA *ngIf="true"></child>
+      <child dirA *ngIf="conditionalChildVisible"></child>
       <ng-container><p></p></ng-container>
-    `
+      <b *ngIf="visible">Bold</b>
+    `,
+    standalone: false,
   })
   class MyApp {
     text: string = 'INIT';
-    constructor() { myApp = this; }
+    spanVisible = true;
+    conditionalChildVisible = true;
+    @Input('a') b = 2;
+    @Output('c') d = new EventEmitter();
+    constructor() {
+      myApp = this;
+    }
 
-    log(event: any) { log.push(event); }
+    log(event: any) {
+      log.push(event);
+    }
   }
 
   describe('getComponent', () => {
@@ -77,25 +126,54 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getComponent(p[0])).toEqual(null);
     });
     it('should throw when called on non-element', () => {
-      expect(() => getComponent(dirA[0] as any)).toThrowError(/Expecting instance of DOM Node/);
-      expect(() => getComponent(dirA[1] as any)).toThrowError(/Expecting instance of DOM Node/);
+      expect(() => getComponent(dirA[0] as any)).toThrowError(/Expecting instance of DOM Element/);
+      expect(() => getComponent(dirA[1] as any)).toThrowError(/Expecting instance of DOM Element/);
     });
     it('should return component from element', () => {
       expect(getComponent<MyApp>(fixture.nativeElement)).toEqual(myApp);
       expect(getComponent<Child>(child[0])).toEqual(childComponent[0]);
       expect(getComponent<Child>(child[1])).toEqual(childComponent[1]);
     });
+    it('should not throw when called on a destroyed node', () => {
+      expect(getComponent(span[0])).toEqual(null);
+      expect(getComponent<Child>(child[2])).toEqual(childComponent[2]);
+      fixture.componentInstance.spanVisible = false;
+      fixture.componentInstance.conditionalChildVisible = false;
+      fixture.detectChanges();
+      expect(getComponent(span[0])).toEqual(null);
+      expect(getComponent<Child>(child[2])).toEqual(childComponent[2]);
+    });
+  });
+
+  describe('getComponentLView', () => {
+    it('should retrieve component LView from element', () => {
+      const childLView = getComponentLView(child[0]);
+      expect(isLView(childLView)).toBe(true);
+      expect(childLView[CONTEXT] instanceof Child).toBe(true);
+    });
+
+    it('should retrieve component LView from component instance', () => {
+      const childLView = getComponentLView(childComponent[0]);
+      expect(isLView(childLView)).toBe(true);
+      expect(childLView[CONTEXT] instanceof Child).toBe(true);
+    });
   });
 
   describe('getContext', () => {
     it('should throw when called on non-element', () => {
-      expect(() => getContext(dirA[0] as any)).toThrowError(/Expecting instance of DOM Node/);
-      expect(() => getContext(dirA[1] as any)).toThrowError(/Expecting instance of DOM Node/);
+      expect(() => getContext(dirA[0] as any)).toThrowError(/Expecting instance of DOM Element/);
+      expect(() => getContext(dirA[1] as any)).toThrowError(/Expecting instance of DOM Element/);
     });
     it('should return context from element', () => {
       expect(getContext<MyApp>(child[0])).toEqual(myApp);
-      expect(getContext<{$implicit: boolean}>(child[2]) !.$implicit).toEqual(true);
+      expect(getContext<{$implicit: boolean}>(child[2])!.$implicit).toEqual(true);
       expect(getContext<Child>(p[0])).toEqual(childComponent[0]);
+    });
+    it('should return null for destroyed node', () => {
+      expect(getContext(span[0])).toBeTruthy();
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getContext(span[0])).toBeNull();
     });
   });
 
@@ -110,7 +188,13 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getHostElement(dirA[1])).toEqual(child[1]);
     });
     it('should throw on unknown target', () => {
-      expect(() => getHostElement({})).toThrowError();  //
+      expect(() => getHostElement({})).toThrowError(); //
+    });
+    it('should return element for destroyed node', () => {
+      expect(getHostElement(span[0])).toEqual(span[0]);
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getHostElement(span[0])).toEqual(span[0]);
     });
   });
 
@@ -129,6 +213,12 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getInjector(dirA[0]).get(String)).toEqual('Module');
       expect(getInjector(dirA[1]).get(String)).toEqual('Child');
     });
+    it('should retrieve injector from destroyed node', () => {
+      expect(getInjector(span[0])).toBeTruthy();
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getInjector(span[0])).toBeTruthy();
+    });
   });
 
   describe('getDirectives', () => {
@@ -141,32 +231,44 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getDirectives(div[0])).toEqual([dirA[0]]);
       expect(getDirectives(child[1])).toEqual([dirA[1]]);
     });
+    it('should return empty array for destroyed node', () => {
+      expect(getDirectives(span[0])).toEqual([]);
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getDirectives(span[0])).toEqual([]);
+    });
   });
 
-  describe('getViewComponent', () => {
+  describe('getOwningComponent', () => {
     it('should return null when called on root component', () => {
-      expect(getViewComponent(fixture.nativeElement)).toEqual(null);
-      expect(getViewComponent(myApp)).toEqual(null);
+      expect(getOwningComponent(fixture.nativeElement)).toEqual(null);
+      expect(getOwningComponent(myApp)).toEqual(null);
     });
     it('should return containing component of child component', () => {
-      expect(getViewComponent<MyApp>(child[0])).toEqual(myApp);
-      expect(getViewComponent<MyApp>(child[1])).toEqual(myApp);
-      expect(getViewComponent<MyApp>(child[2])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(child[0])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(child[1])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(child[2])).toEqual(myApp);
 
-      expect(getViewComponent<MyApp>(childComponent[0])).toEqual(myApp);
-      expect(getViewComponent<MyApp>(childComponent[1])).toEqual(myApp);
-      expect(getViewComponent<MyApp>(childComponent[2])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(childComponent[0])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(childComponent[1])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(childComponent[2])).toEqual(myApp);
     });
     it('should return containing component of any view element', () => {
-      expect(getViewComponent<MyApp>(span[0])).toEqual(myApp);
-      expect(getViewComponent<MyApp>(div[0])).toEqual(myApp);
-      expect(getViewComponent<Child>(p[0])).toEqual(childComponent[0]);
-      expect(getViewComponent<Child>(p[1])).toEqual(childComponent[1]);
-      expect(getViewComponent<Child>(p[2])).toEqual(childComponent[2]);
+      expect(getOwningComponent<MyApp>(span[0])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(div[0])).toEqual(myApp);
+      expect(getOwningComponent<Child>(p[0])).toEqual(childComponent[0]);
+      expect(getOwningComponent<Child>(p[1])).toEqual(childComponent[1]);
+      expect(getOwningComponent<Child>(p[2])).toEqual(childComponent[2]);
     });
     it('should return containing component of child directive', () => {
-      expect(getViewComponent<MyApp>(dirA[0])).toEqual(myApp);
-      expect(getViewComponent<MyApp>(dirA[1])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(dirA[0])).toEqual(myApp);
+      expect(getOwningComponent<MyApp>(dirA[1])).toEqual(myApp);
+    });
+    it('should return null for destroyed node', () => {
+      expect(getOwningComponent<MyApp>(span[0])).toEqual(myApp);
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getOwningComponent<MyApp>(span[0])).toEqual(null);
     });
   });
 
@@ -185,6 +287,13 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getLocalRefs(child[1])).toEqual({child: childComponent[1]});
       expect(getLocalRefs(dirA[1])).toEqual({child: childComponent[1]});
     });
+
+    it('should retrieve from a destroyed node', () => {
+      expect(getLocalRefs(span[0])).toEqual({});
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getLocalRefs(span[0])).toEqual({});
+    });
   });
 
   describe('getRootComponents', () => {
@@ -200,6 +309,12 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getRootComponents(div[0])).toEqual(rootComponents);
       expect(getRootComponents(p[0])).toEqual(rootComponents);
     });
+    it('should return an empty array for a destroyed node', () => {
+      expect(getRootComponents(span[0])).toEqual([myApp]);
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getRootComponents(span[0])).toEqual([]);
+    });
   });
 
   describe('getListeners', () => {
@@ -213,8 +328,15 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(listeners[0].name).toEqual('click');
       expect(listeners[0].element).toEqual(span[0]);
       expect(listeners[0].useCapture).toEqual(false);
+      expect(listeners[0].type).toEqual('dom');
       listeners[0].callback('CLICKED');
       expect(log).toEqual(['CLICKED']);
+    });
+    it('should return no listeners for destroyed node', () => {
+      expect(getListeners(span[0]).length).toEqual(1);
+      fixture.componentInstance.spanVisible = false;
+      fixture.detectChanges();
+      expect(getListeners(span[0]).length).toEqual(0);
     });
   });
 
@@ -224,97 +346,124 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils', () => {
       expect(getInjectionTokens(child[0])).toEqual([String, Child]);
       expect(getInjectionTokens(child[1])).toEqual([String, Child, DirectiveA]);
     });
-  });
-
-  describe('markDirty', () => {
-    it('should re-render component', () => {
-      expect(span[0].textContent).toEqual('INIT');
-      myApp.text = 'WORKS';
-      markDirty(myApp);
+    it('should retrieve tokens from destroyed node', () => {
+      expect(getInjectionTokens(span[0])).toEqual([]);
+      fixture.componentInstance.spanVisible = false;
       fixture.detectChanges();
-      expect(span[0].textContent).toEqual('WORKS');
+      expect(getInjectionTokens(span[0])).toEqual([]);
     });
   });
 
-  describe('loadLContext', () => {
+  describe('getLContext', () => {
     it('should work on components', () => {
-      const lContext = loadLContext(child[0]);
+      const lContext = getLContext(child[0])!;
       expect(lContext).toBeDefined();
       expect(lContext.native as any).toBe(child[0]);
     });
 
     it('should work on templates', () => {
-      const templateComment = Array.from((fixture.nativeElement as HTMLElement).childNodes)
-                                  .find((node: ChildNode) => node.nodeType === Node.COMMENT_NODE) !;
-      const lContext = loadLContext(templateComment);
+      const templateComment = Array.from((fixture.nativeElement as HTMLElement).childNodes).find(
+        (node: ChildNode) => node.nodeType === Node.COMMENT_NODE,
+      )!;
+      const lContext = getLContext(templateComment)!;
       expect(lContext).toBeDefined();
       expect(lContext.native as any).toBe(templateComment);
     });
 
     it('should work on ng-container', () => {
-      const ngContainerComment = Array.from((fixture.nativeElement as HTMLElement).childNodes)
-                                     .find(
-                                         (node: ChildNode) => node.nodeType === Node.COMMENT_NODE &&
-                                             node.textContent === `ng-container`) !;
-      const lContext = loadLContext(ngContainerComment);
+      const ngContainerComment = Array.from((fixture.nativeElement as HTMLElement).childNodes).find(
+        (node: ChildNode) =>
+          node.nodeType === Node.COMMENT_NODE && node.textContent === `ng-container`,
+      )!;
+      const lContext = getLContext(ngContainerComment)!;
       expect(lContext).toBeDefined();
       expect(lContext.native as any).toBe(ngContainerComment);
     });
   });
+
+  describe('getDirectiveMetadata', () => {
+    it('should work with components', () => {
+      const metadata = getDirectiveMetadata(myApp);
+      expect(metadata!.inputs).toEqual({a: 'b'});
+      expect(metadata!.outputs).toEqual({c: 'd'});
+      expect((metadata as ComponentDebugMetadata).changeDetection).toBe(
+        ChangeDetectionStrategy.Default,
+      );
+      expect((metadata as ComponentDebugMetadata).encapsulation).toBe(ViewEncapsulation.None);
+    });
+
+    it('should work with directives', () => {
+      const metadata = getDirectiveMetadata(getDirectives(div[0])[0]);
+      expect(metadata!.inputs).toEqual({a: 'b'});
+      expect(metadata!.outputs).toEqual({c: 'd'});
+    });
+  });
 });
 
-onlyInIvy('Ivy-specific utilities').describe('discovery utils deprecated', () => {
+describe('discovery utils deprecated', () => {
   describe('getRootComponents()', () => {
     it('should return a list of the root components of the application from an element', () => {
+      @Component({
+        selector: 'inner-comp',
+        template: '<div></div>',
+        standalone: false,
+      })
+      class InnerComp {}
 
-      @Component({selector: 'inner-comp', template: '<div></div>'})
-      class InnerComp {
-      }
-
-      @Component({selector: 'comp', template: '<inner-comp></inner-comp>'})
-      class Comp {
-      }
+      @Component({
+        selector: 'comp',
+        template: '<inner-comp></inner-comp>',
+        standalone: false,
+      })
+      class Comp {}
 
       TestBed.configureTestingModule({declarations: [Comp, InnerComp]});
       const fixture = TestBed.createComponent(Comp);
       fixture.detectChanges();
 
       const hostElm = fixture.nativeElement;
-      const innerElm = hostElm.querySelector('inner-comp') !;
-      const divElm = hostElm.querySelector('div') !;
+      const innerElm = hostElm.querySelector('inner-comp')!;
+      const divElm = hostElm.querySelector('div')!;
       const component = fixture.componentInstance;
 
-      expect(getRootComponents(hostElm) !).toEqual([component]);
-      expect(getRootComponents(innerElm) !).toEqual([component]);
-      expect(getRootComponents(divElm) !).toEqual([component]);
+      expect(getRootComponents(hostElm)!).toEqual([component]);
+      expect(getRootComponents(innerElm)!).toEqual([component]);
+      expect(getRootComponents(divElm)!).toEqual([component]);
     });
   });
 
   describe('getDirectives()', () => {
     it('should return a list of the directives that are on the given element', () => {
-      @Directive({selector: '[my-dir-1]'})
-      class MyDir1 {
-      }
+      @Directive({
+        selector: '[my-dir-1]',
+        standalone: false,
+      })
+      class MyDir1 {}
 
-      @Directive({selector: '[my-dir-2]'})
-      class MyDir2 {
-      }
+      @Directive({
+        selector: '[my-dir-2]',
+        standalone: false,
+      })
+      class MyDir2 {}
 
-      @Directive({selector: '[my-dir-3]'})
-      class MyDir3 {
-      }
+      @Directive({
+        selector: '[my-dir-3]',
+        standalone: false,
+      })
+      class MyDir3 {}
 
       @Component({
         selector: 'comp',
         template: `
           <div my-dir-1 my-dir-2></div>
           <div my-dir-3></div>
-        `
+        `,
+        standalone: false,
       })
       class Comp {
-        @ViewChild(MyDir1, {static: false}) myDir1Instance !: MyDir1;
-        @ViewChild(MyDir2, {static: false}) myDir2Instance !: MyDir2;
-        @ViewChild(MyDir3, {static: false}) myDir3Instance !: MyDir3;
+        @ViewChild(MyDir1) myDir1Instance!: MyDir1;
+        @ViewChild(MyDir2) myDir2Instance!: MyDir2;
+        @ViewChild(MyDir3) myDir3Instance!: MyDir3;
       }
 
       TestBed.configureTestingModule({declarations: [Comp, MyDir1, MyDir2, MyDir3]});
@@ -326,22 +475,32 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils deprecated', () =>
 
       const elm1 = elements[0];
       const elm1Dirs = getDirectives(elm1);
-      expect(elm1Dirs).toContain(fixture.componentInstance.myDir1Instance !);
-      expect(elm1Dirs).toContain(fixture.componentInstance.myDir2Instance !);
+      expect(elm1Dirs).toContain(fixture.componentInstance.myDir1Instance!);
+      expect(elm1Dirs).toContain(fixture.componentInstance.myDir2Instance!);
 
       const elm2 = elements[1];
       const elm2Dirs = getDirectives(elm2);
-      expect(elm2Dirs).toContain(fixture.componentInstance.myDir3Instance !);
+      expect(elm2Dirs).toContain(fixture.componentInstance.myDir3Instance!);
+    });
+
+    it('should not throw if it cannot find LContext', () => {
+      let result: any;
+
+      expect(() => {
+        result = getDirectives(document.createElement('div'));
+      }).not.toThrow();
+
+      expect(result).toEqual([]);
     });
   });
 
   describe('getInjector', () => {
-
     it('should return an injector that can return directive instances', () => {
-
-      @Component({template: ''})
-      class Comp {
-      }
+      @Component({
+        template: '',
+        standalone: false,
+      })
+      class Comp {}
 
       TestBed.configureTestingModule({declarations: [Comp]});
       const fixture = TestBed.createComponent(Comp);
@@ -350,15 +509,19 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils deprecated', () =>
     });
 
     it('should return an injector that falls-back to a module injector', () => {
-      @Component({template: ''})
-      class Comp {
-      }
+      @Component({
+        template: '',
+        standalone: false,
+      })
+      class Comp {}
 
       class TestToken {}
       const token = new InjectionToken<TestToken>('test token');
 
-      TestBed.configureTestingModule(
-          {declarations: [Comp], providers: [{provide: token, useValue: new TestToken()}]});
+      TestBed.configureTestingModule({
+        declarations: [Comp],
+        providers: [{provide: token, useValue: new TestToken()}],
+      });
       const fixture = TestBed.createComponent(Comp);
       const nodeInjector = getInjector(fixture.nativeElement);
       expect(nodeInjector.get(token)).toEqual(jasmine.any(TestToken));
@@ -367,28 +530,35 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils deprecated', () =>
 
   describe('getLocalRefs', () => {
     it('should return a map of local refs for an element', () => {
+      @Directive({
+        selector: '[myDir]',
+        exportAs: 'myDir',
+        standalone: false,
+      })
+      class MyDir {}
 
-      @Directive({selector: '[myDir]', exportAs: 'myDir'})
-      class MyDir {
-      }
-
-      @Component({template: '<div myDir #elRef #dirRef="myDir"></div>'})
-      class Comp {
-      }
+      @Component({
+        template: '<div myDir #elRef #dirRef="myDir"></div>',
+        standalone: false,
+      })
+      class Comp {}
 
       TestBed.configureTestingModule({declarations: [Comp, MyDir]});
       const fixture = TestBed.createComponent(Comp);
       fixture.detectChanges();
 
-      const divEl = fixture.nativeElement.querySelector('div') !;
+      const divEl = fixture.nativeElement.querySelector('div')!;
       const localRefs = getLocalRefs(divEl);
 
-      expect(localRefs.elRef.tagName.toLowerCase()).toBe('div');
-      expect(localRefs.dirRef.constructor).toBe(MyDir);
+      expect(localRefs['elRef'].tagName.toLowerCase()).toBe('div');
+      expect(localRefs['dirRef'].constructor).toBe(MyDir);
     });
 
     it('should return a map of local refs for an element with styling context', () => {
-      @Component({template: '<div #elRef class="fooClass" [style.color]="color"></div>'})
+      @Component({
+        template: '<div #elRef class="fooClass" [style.color]="color"></div>',
+        standalone: false,
+      })
       class Comp {
         color = 'red';
       }
@@ -397,10 +567,10 @@ onlyInIvy('Ivy-specific utilities').describe('discovery utils deprecated', () =>
       const fixture = TestBed.createComponent(Comp);
       fixture.detectChanges();
 
-      const divEl = fixture.nativeElement.querySelector('div') !;
+      const divEl = fixture.nativeElement.querySelector('div')!;
       const localRefs = getLocalRefs(divEl);
 
-      expect(localRefs.elRef.tagName.toLowerCase()).toBe('div');
+      expect(localRefs['elRef'].tagName.toLowerCase()).toBe('div');
     });
   });
 });

@@ -1,16 +1,20 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {EventEmitter} from 'events';
 
 describe('nodejs EventEmitter', () => {
-  let zone: Zone, zoneA: Zone, zoneB: Zone, emitter: EventEmitter, expectZoneACount: number,
-      zoneResults: string[];
+  let zone: Zone,
+    zoneA: Zone,
+    zoneB: Zone,
+    emitter: EventEmitter,
+    expectZoneACount: number,
+    zoneResults: string[];
   beforeEach(() => {
     zone = Zone.current;
     zoneA = zone.fork({name: 'A'});
@@ -28,11 +32,17 @@ describe('nodejs EventEmitter', () => {
     expect(value).toBe('test value');
   }
 
-  function listenerA() { zoneResults.push('A'); }
+  function listenerA() {
+    zoneResults.push('A');
+  }
 
-  function listenerB() { zoneResults.push('B'); }
+  function listenerB() {
+    zoneResults.push('B');
+  }
 
-  function shouldNotRun() { fail('this listener should not run'); }
+  function shouldNotRun() {
+    fail('this listener should not run');
+  }
 
   it('should register listeners in the current zone', () => {
     zoneA.run(() => {
@@ -60,6 +70,18 @@ describe('nodejs EventEmitter', () => {
       emitter.emit('test2', 'test value');
     });
   });
+  it('should remove listeners by calling off properly', () => {
+    zoneA.run(() => {
+      emitter.on('test', shouldNotRun);
+      emitter.on('test2', shouldNotRun);
+      emitter.off('test', shouldNotRun);
+    });
+    zoneB.run(() => {
+      emitter.off('test2', shouldNotRun);
+      emitter.emit('test', 'test value');
+      emitter.emit('test2', 'test value');
+    });
+  });
   it('remove listener should return event emitter', () => {
     zoneA.run(() => {
       emitter.on('test', shouldNotRun);
@@ -68,12 +90,19 @@ describe('nodejs EventEmitter', () => {
     });
   });
   it('should return all listeners for an event', () => {
-    zoneA.run(() => { emitter.on('test', expectZoneA); });
-    zoneB.run(() => { emitter.on('test', shouldNotRun); });
+    zoneA.run(() => {
+      emitter.on('test', expectZoneA);
+    });
+    zoneB.run(() => {
+      emitter.on('test', shouldNotRun);
+    });
     expect(emitter.listeners('test')).toEqual([expectZoneA, shouldNotRun]);
   });
-  it('should return empty array when an event has no listeners',
-     () => { zoneA.run(() => { expect(emitter.listeners('test')).toEqual([]); }); });
+  it('should return empty array when an event has no listeners', () => {
+    zoneA.run(() => {
+      expect(emitter.listeners('test')).toEqual([]);
+    });
+  });
   it('should prepend listener by order', () => {
     zoneA.run(() => {
       emitter.on('test', listenerA);
@@ -133,11 +162,12 @@ describe('nodejs EventEmitter', () => {
   });
   it('should trigger removeListener when remove listener', () => {
     zoneA.run(() => {
-      emitter.on('removeListener', function(type: string, handler: any) {
-        zoneResults.push('remove' + type);
+      emitter.on('removeListener', function (type: string | symbol, handler: any) {
+        zoneResults.push('remove' + type.toString());
       });
-      emitter.on(
-          'newListener', function(type: string, handler: any) { zoneResults.push('new' + type); });
+      emitter.on('newListener', function (type: string | symbol, handler: any) {
+        zoneResults.push('new' + type.toString());
+      });
       emitter.on('test', shouldNotRun);
       emitter.removeListener('test', shouldNotRun);
       expect(zoneResults).toEqual(['newtest', 'removetest']);
@@ -145,8 +175,8 @@ describe('nodejs EventEmitter', () => {
   });
   it('should trigger removeListener when remove all listeners with eventname ', () => {
     zoneA.run(() => {
-      emitter.on('removeListener', function(type: string, handler: any) {
-        zoneResults.push('remove' + type);
+      emitter.on('removeListener', function (type: string | symbol, handler: any) {
+        zoneResults.push('remove' + type.toString());
       });
       emitter.on('test', shouldNotRun);
       emitter.on('test1', expectZoneA);
@@ -157,8 +187,8 @@ describe('nodejs EventEmitter', () => {
   });
   it('should trigger removeListener when remove all listeners without eventname', () => {
     zoneA.run(() => {
-      emitter.on('removeListener', function(type: string, handler: any) {
-        zoneResults.push('remove' + type);
+      emitter.on('removeListener', function (type: string | symbol, handler: any) {
+        zoneResults.push('remove' + type.toString());
       });
       emitter.on('test', shouldNotRun);
       emitter.on('test1', shouldNotRun);
@@ -171,7 +201,9 @@ describe('nodejs EventEmitter', () => {
   });
   it('should not enter endless loop when register uncaughtException to process', () => {
     require('domain');
-    zoneA.run(() => { process.on('uncaughtException', function() {}); });
+    zoneA.run(() => {
+      process.on('uncaughtException', function () {});
+    });
   });
   it('should be able to addEventListener with symbol eventName', () => {
     zoneA.run(() => {

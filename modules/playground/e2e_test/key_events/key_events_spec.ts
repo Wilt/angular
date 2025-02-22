@@ -1,25 +1,25 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
+import {verifyNoBrowserErrors} from '@angular/build-tooling/bazel/benchmark/driver-utilities';
 import {browser, by, element, protractor} from 'protractor';
-
-import {verifyNoBrowserErrors} from '../../../e2e_util/e2e_util';
 
 const Key = protractor.Key;
 
-describe('key_events', function() {
-
+describe('key_events', function () {
   const URL = '/';
 
   afterEach(verifyNoBrowserErrors);
-  beforeEach(() => { browser.get(URL); });
+  beforeEach(() => {
+    browser.get(URL);
+  });
 
-  it('should display correct key names', function() {
+  it('should display correct key names', function () {
     const firstArea = element.all(by.css('.sample-area')).get(0);
     expect(firstArea.getText()).toEqual('(none)');
 
@@ -61,22 +61,21 @@ describe('key_events', function() {
     // expect(firstArea.getText()).toEqual('0');
   });
 
-  it('should correctly react to the specified key', function() {
+  it('should correctly react to the specified key', function () {
     const secondArea = element.all(by.css('.sample-area')).get(1);
     secondArea.sendKeys(Key.SHIFT, Key.ENTER);
     expect(secondArea.getText()).toEqual('You pressed shift.enter!');
   });
 
-  it('should not react to incomplete keys', function() {
+  it('should not react to incomplete keys', function () {
     const secondArea = element.all(by.css('.sample-area')).get(1);
     secondArea.sendKeys(Key.ENTER);
     expect(secondArea.getText()).toEqual('');
   });
 
-  it('should not react to keys with more modifiers', function() {
+  it('should not react to keys with more modifiers', function () {
     const secondArea = element.all(by.css('.sample-area')).get(1);
     secondArea.sendKeys(Key.CONTROL, Key.SHIFT, Key.ENTER);
     expect(secondArea.getText()).toEqual('');
   });
-
 });

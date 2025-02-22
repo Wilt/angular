@@ -1,14 +1,13 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import {Route, UrlMatchResult} from './config';
-import {UrlSegment, UrlSegmentGroup} from './url_tree';
-
+import type {Route, UrlMatchResult} from './models';
+import type {UrlSegment, UrlSegmentGroup} from './url_tree';
 
 /**
  * The primary routing outlet.
@@ -18,14 +17,21 @@ import {UrlSegment, UrlSegmentGroup} from './url_tree';
 export const PRIMARY_OUTLET = 'primary';
 
 /**
+ * A private symbol used to store the value of `Route.title` inside the `Route.data` if it is a
+ * static string or `Route.resolve` if anything else. This allows us to reuse the existing route
+ * data/resolvers to support the title feature without new instrumentation in the `Router` pipeline.
+ */
+export const RouteTitleKey = /* @__PURE__ */ Symbol('RouteTitle');
+
+/**
  * A collection of matrix and query URL parameters.
- * @see `convertToParamMap()`
- * @see `ParamMap`
+ * @see {@link convertToParamMap}
+ * @see {@link ParamMap}
  *
  * @publicApi
  */
 export type Params = {
-  [key: string]: any
+  [key: string]: any;
 };
 
 /**
@@ -52,7 +58,7 @@ export interface ParamMap {
    * or the first value if the parameter has multiple values,
    * or `null` when there is no such parameter.
    */
-  get(name: string): string|null;
+  get(name: string): string | null;
   /**
    * Retrieves multiple values for a parameter.
    * @param name The parameter name.
@@ -69,11 +75,15 @@ export interface ParamMap {
 class ParamsAsMap implements ParamMap {
   private params: Params;
 
-  constructor(params: Params) { this.params = params || {}; }
+  constructor(params: Params) {
+    this.params = params || {};
+  }
 
-  has(name: string): boolean { return this.params.hasOwnProperty(name); }
+  has(name: string): boolean {
+    return Object.prototype.hasOwnProperty.call(this.params, name);
+  }
 
-  get(name: string): string|null {
+  get(name: string): string | null {
     if (this.has(name)) {
       const v = this.params[name];
       return Array.isArray(v) ? v[0] : v;
@@ -91,7 +101,9 @@ class ParamsAsMap implements ParamMap {
     return [];
   }
 
-  get keys(): string[] { return Object.keys(this.params); }
+  get keys(): string[] {
+    return Object.keys(this.params);
+  }
 }
 
 /**
@@ -105,30 +117,37 @@ export function convertToParamMap(params: Params): ParamMap {
   return new ParamsAsMap(params);
 }
 
-const NAVIGATION_CANCELING_ERROR = 'ngNavigationCancelingError';
-
-export function navigationCancelingError(message: string) {
-  const error = Error('NavigationCancelingError: ' + message);
-  (error as any)[NAVIGATION_CANCELING_ERROR] = true;
-  return error;
-}
-
-export function isNavigationCancelingError(error: Error) {
-  return error && (error as any)[NAVIGATION_CANCELING_ERROR];
-}
-
-// Matches the route configuration (`route`) against the actual URL (`segments`).
+/**
+ * Matches the route configuration (`route`) against the actual URL (`segments`).
+ *
+ * When no matcher is defined on a `Route`, this is the matcher used by the Router by default.
+ *
+ * @param segments The remaining unmatched segments in the current navigation
+ * @param segmentGroup The current segment group being matched
+ * @param route The `Route` to match against.
+ *
+ * @see {@link UrlMatchResult}
+ * @see {@link Route}
+ *
+ * @returns The resulting match information or `null` if the `route` should not match.
+ * @publicApi
+ */
 export function defaultUrlMatcher(
-    segments: UrlSegment[], segmentGroup: UrlSegmentGroup, route: Route): UrlMatchResult|null {
-  const parts = route.path !.split('/');
+  segments: UrlSegment[],
+  segmentGroup: UrlSegmentGroup,
+  route: Route,
+): UrlMatchResult | null {
+  const parts = route.path!.split('/');
 
   if (parts.length > segments.length) {
     // The actual URL is shorter than the config, no match
     return null;
   }
 
-  if (route.pathMatch === 'full' &&
-      (segmentGroup.hasChildren() || parts.length < segments.length)) {
+  if (
+    route.pathMatch === 'full' &&
+    (segmentGroup.hasChildren() || parts.length < segments.length)
+  ) {
     // The config is longer than the actual URL but we are looking for a full match, return null
     return null;
   }
@@ -139,7 +158,7 @@ export function defaultUrlMatcher(
   for (let index = 0; index < parts.length; index++) {
     const part = parts[index];
     const segment = segments[index];
-    const isParameter = part.startsWith(':');
+    const isParameter = part[0] === ':';
     if (isParameter) {
       posParams[part.substring(1)] = segment;
     } else if (part !== segment.path) {

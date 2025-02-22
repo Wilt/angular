@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 import {ParseSourceFile} from '@angular/compiler';
 import {runInEachFileSystem} from '../../file_system/testing';
@@ -19,23 +19,27 @@ runInEachFileSystem(() => {
 
       context.addComponent({
         declaration,
-        selector: 'c-selector', boundTemplate,
+        selector: 'c-selector',
+        boundTemplate,
         templateMeta: {
           isInline: false,
-          file: new ParseSourceFile('<div></div>', util.getTestFilePath()),
+          file: new ParseSourceFile('<div></div>', declaration.getSourceFile().fileName),
         },
       });
 
-      expect(context.components).toEqual(new Set([
-        {
-          declaration,
-          selector: 'c-selector', boundTemplate,
-          templateMeta: {
-            isInline: false,
-            file: new ParseSourceFile('<div></div>', util.getTestFilePath()),
+      expect(context.components).toEqual(
+        new Set([
+          {
+            declaration,
+            selector: 'c-selector',
+            boundTemplate,
+            templateMeta: {
+              isInline: false,
+              file: new ParseSourceFile('<div></div>', declaration.getSourceFile().fileName),
+            },
           },
-        },
-      ]));
+        ]),
+      );
     });
   });
 });

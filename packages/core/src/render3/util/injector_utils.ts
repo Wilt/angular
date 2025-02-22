@@ -1,23 +1,43 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-import {NO_PARENT_INJECTOR, RelativeInjectorLocation, RelativeInjectorLocationFlags} from '../interfaces/injector';
-import {DECLARATION_VIEW, LView} from '../interfaces/view';
+
+import {type Injector} from '../../di/injector';
+import {assertGreaterThan, assertNotEqual, assertNumber} from '../../util/assert';
+import {ChainedInjector} from '../chained_injector';
+import {
+  NO_PARENT_INJECTOR,
+  RelativeInjectorLocation,
+  RelativeInjectorLocationFlags,
+} from '../interfaces/injector';
+import {DECLARATION_VIEW, HEADER_OFFSET, LView} from '../interfaces/view';
+
 /// Parent Injector Utils ///////////////////////////////////////////////////////////////
 export function hasParentInjector(parentLocation: RelativeInjectorLocation): boolean {
   return parentLocation !== NO_PARENT_INJECTOR;
 }
 
 export function getParentInjectorIndex(parentLocation: RelativeInjectorLocation): number {
-  return (parentLocation as any as number) & RelativeInjectorLocationFlags.InjectorIndexMask;
+  if (ngDevMode) {
+    assertNumber(parentLocation, 'Number expected');
+    assertNotEqual(parentLocation as any, -1, 'Not a valid state.');
+    const parentInjectorIndex = parentLocation & RelativeInjectorLocationFlags.InjectorIndexMask;
+
+    assertGreaterThan(
+      parentInjectorIndex,
+      HEADER_OFFSET,
+      'Parent injector must be pointing past HEADER_OFFSET.',
+    );
+  }
+  return parentLocation & RelativeInjectorLocationFlags.InjectorIndexMask;
 }
 
 export function getParentInjectorViewOffset(parentLocation: RelativeInjectorLocation): number {
-  return (parentLocation as any as number) >> RelativeInjectorLocationFlags.ViewOffsetShift;
+  return parentLocation >> RelativeInjectorLocationFlags.ViewOffsetShift;
 }
 
 /**
@@ -37,8 +57,19 @@ export function getParentInjectorView(location: RelativeInjectorLocation, startV
   // <ng-template> tags or inline views, where the parent injector might live many views
   // above the child injector.
   while (viewOffset > 0) {
-    parentView = parentView[DECLARATION_VIEW] !;
+    parentView = parentView[DECLARATION_VIEW]!;
     viewOffset--;
   }
   return parentView;
+}
+
+/**
+ * Detects whether an injector is an instance of a `ChainedInjector`,
+ * created based on the `OutletInjector`.
+ */
+export function isRouterOutletInjector(currentInjector: Injector): boolean {
+  return (
+    currentInjector instanceof ChainedInjector &&
+    typeof (currentInjector.injector as any).__ngOutletInjector === 'function'
+  );
 }

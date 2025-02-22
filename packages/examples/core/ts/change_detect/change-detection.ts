@@ -1,21 +1,26 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-/* tslint:disable:no-console  */
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Directive} from '@angular/core';
-
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Input,
+  NgModule,
+} from '@angular/core';
+import {FormsModule} from '@angular/forms';
 
 // #docregion mark-for-check
 @Component({
-  selector: 'my-app',
-  template: `Number of ticks: {{numberOfTicks}}`,
+  selector: 'app-root',
+  template: `Number of ticks: {{ numberOfTicks }}`,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
-
 class AppComponent {
   numberOfTicks = 0;
 
@@ -32,46 +37,60 @@ class AppComponent {
 // #docregion detach
 class DataListProvider {
   // in a real application the returned data will be different every time
-  get data() { return [1, 2, 3, 4, 5]; }
+  get data() {
+    return [1, 2, 3, 4, 5];
+  }
 }
 
 @Component({
   selector: 'giant-list',
-  template: `
-      <li *ngFor="let d of dataProvider.data">Data {{d}}</li>
-    `,
+  template: ` <li *ngFor="let d of dataProvider.data">Data {{ d }}</li> `,
+  standalone: false,
 })
 class GiantList {
-  constructor(private ref: ChangeDetectorRef, private dataProvider: DataListProvider) {
+  constructor(
+    private ref: ChangeDetectorRef,
+    public dataProvider: DataListProvider,
+  ) {
     ref.detach();
-    setInterval(() => { this.ref.detectChanges(); }, 5000);
+    setInterval(() => {
+      this.ref.detectChanges();
+    }, 5000);
   }
 }
 
 @Component({
   selector: 'app',
   providers: [DataListProvider],
-  template: `
-      <giant-list></giant-list>
-    `,
+  template: ` <giant-list></giant-list> `,
+  standalone: false,
 })
-class App {
-}
+class App {}
 // #enddocregion detach
 
 // #docregion reattach
 class DataProvider {
   data = 1;
   constructor() {
-    setInterval(() => { this.data = 2; }, 500);
+    setInterval(() => {
+      this.data = 2;
+    }, 500);
   }
 }
 
-
-@Component({selector: 'live-data', inputs: ['live'], template: 'Data: {{dataProvider.data}}'})
+@Component({
+  selector: 'live-data',
+  inputs: ['live'],
+  template: 'Data: {{dataProvider.data}}',
+  standalone: false,
+})
 class LiveData {
-  constructor(private ref: ChangeDetectorRef, private dataProvider: DataProvider) {}
+  constructor(
+    private ref: ChangeDetectorRef,
+    public dataProvider: DataProvider,
+  ) {}
 
+  @Input()
   set live(value: boolean) {
     if (value) {
       this.ref.reattach();
@@ -85,12 +104,15 @@ class LiveData {
   selector: 'app',
   providers: [DataProvider],
   template: `
-       Live Update: <input type="checkbox" [(ngModel)]="live">
-       <live-data [live]="live"></live-data>
-     `,
+    Live Update: <input type="checkbox" [(ngModel)]="live" />
+    <live-data [live]="live"></live-data>
+  `,
+  standalone: false,
 })
-
 class App1 {
   live = true;
 }
 // #enddocregion reattach
+
+@NgModule({declarations: [AppComponent, GiantList, App, LiveData, App1], imports: [FormsModule]})
+class CoreExamplesModule {}

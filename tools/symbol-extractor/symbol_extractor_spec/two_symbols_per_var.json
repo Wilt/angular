@@ -1,8 +1,5 @@
 [
-  {
-    "name": "A"
-  },
-  {
-    "name": "B"
-  }
+  "A",
+  "B",
+  "no_initializer"
 ]

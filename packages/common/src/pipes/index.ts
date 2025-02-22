@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 /**
@@ -13,7 +13,8 @@
  */
 import {AsyncPipe} from './async_pipe';
 import {LowerCasePipe, TitleCasePipe, UpperCasePipe} from './case_conversion_pipes';
-import {DatePipe} from './date_pipe';
+import {DATE_PIPE_DEFAULT_OPTIONS, DATE_PIPE_DEFAULT_TIMEZONE, DatePipe} from './date_pipe';
+import {DatePipeConfig} from './date_pipe_config';
 import {I18nPluralPipe} from './i18n_plural_pipe';
 import {I18nSelectPipe} from './i18n_select_pipe';
 import {JsonPipe} from './json_pipe';
@@ -24,20 +25,22 @@ import {SlicePipe} from './slice_pipe';
 export {
   AsyncPipe,
   CurrencyPipe,
+  DATE_PIPE_DEFAULT_OPTIONS,
+  DATE_PIPE_DEFAULT_TIMEZONE,
   DatePipe,
+  DatePipeConfig,
   DecimalPipe,
-  KeyValue,
-  KeyValuePipe,
   I18nPluralPipe,
   I18nSelectPipe,
   JsonPipe,
+  KeyValue,
+  KeyValuePipe,
   LowerCasePipe,
   PercentPipe,
   SlicePipe,
   TitleCasePipe,
   UpperCasePipe,
 };
-
 
 /**
  * A collection of Angular pipes that are likely to be used in each and every application.

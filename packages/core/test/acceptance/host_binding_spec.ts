@@ -1,74 +1,107 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
+import {state, style, transition, trigger} from '@angular/animations';
 import {CommonModule} from '@angular/common';
-import {AfterContentInit, Component, ComponentFactoryResolver, ComponentRef, ContentChildren, Directive, DoCheck, HostBinding, HostListener, Injectable, Input, NgModule, OnChanges, OnInit, QueryList, ViewChild, ViewChildren, ViewContainerRef} from '@angular/core';
-import {bypassSanitizationTrustHtml, bypassSanitizationTrustStyle, bypassSanitizationTrustUrl} from '@angular/core/src/sanitization/bypass';
+import {
+  AfterContentInit,
+  Component,
+  ComponentRef,
+  ContentChildren,
+  Directive,
+  DoCheck,
+  HostBinding,
+  HostListener,
+  Injectable,
+  Input,
+  NgModule,
+  OnChanges,
+  OnInit,
+  QueryList,
+  ViewChild,
+  ViewChildren,
+  ViewContainerRef,
+} from '@angular/core';
+import {
+  bypassSanitizationTrustHtml,
+  bypassSanitizationTrustStyle,
+  bypassSanitizationTrustUrl,
+} from '@angular/core/src/sanitization/bypass';
 import {TestBed} from '@angular/core/testing';
-import {ivyEnabled, onlyInIvy} from '@angular/private/testing';
+import {By} from '@angular/platform-browser';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
 describe('host bindings', () => {
-  onlyInIvy('map-based [style] and [class] bindings are not supported in VE')
-      .it('should render host bindings on the root component', () => {
-        @Component({template: '...'})
-        class MyApp {
-          @HostBinding('style') myStylesExp = {};
-          @HostBinding('class') myClassesExp = {};
-        }
+  it('should render host bindings on the root component', () => {
+    @Component({
+      template: '...',
+      standalone: false,
+    })
+    class MyApp {
+      @HostBinding('style') myStylesExp = {};
+      @HostBinding('class') myClassesExp = {};
+    }
 
-        TestBed.configureTestingModule({declarations: [MyApp]});
-        const fixture = TestBed.createComponent(MyApp);
-        const element = fixture.nativeElement;
-        fixture.detectChanges();
+    TestBed.configureTestingModule({declarations: [MyApp]});
+    const fixture = TestBed.createComponent(MyApp);
+    const element = fixture.nativeElement;
+    fixture.detectChanges();
 
-        const component = fixture.componentInstance;
-        component.myStylesExp = {width: '100px'};
-        component.myClassesExp = 'foo';
-        fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.myStylesExp = {width: '100px'};
+    component.myClassesExp = 'foo';
+    fixture.detectChanges();
 
-        expect(element.style['width']).toEqual('100px');
-        expect(element.classList.contains('foo')).toBeTruthy();
+    expect(element.style['width']).toEqual('100px');
+    expect(element.classList.contains('foo')).toBeTruthy();
 
-        component.myStylesExp = {width: '200px'};
-        component.myClassesExp = 'bar';
-        fixture.detectChanges();
+    component.myStylesExp = {width: '200px'};
+    component.myClassesExp = 'bar';
+    fixture.detectChanges();
 
-        expect(element.style['width']).toEqual('200px');
-        expect(element.classList.contains('foo')).toBeFalsy();
-        expect(element.classList.contains('bar')).toBeTruthy();
-      });
+    expect(element.style['width']).toEqual('200px');
+    expect(element.classList.contains('foo')).toBeFalsy();
+    expect(element.classList.contains('bar')).toBeTruthy();
+  });
 
   describe('defined in @Component', () => {
     it('should combine the inherited static classes of a parent and child component', () => {
-      @Component({template: '...', host: {'class': 'foo bar'}})
-      class ParentCmp {
-      }
+      @Component({
+        template: '...',
+        host: {'class': 'foo bar'},
+        standalone: false,
+      })
+      class ParentCmp {}
 
-      @Component({template: '...', host: {'class': 'foo baz'}})
-      class ChildCmp extends ParentCmp {
-      }
+      @Component({
+        template: '...',
+        host: {'class': 'foo baz'},
+        standalone: false,
+      })
+      class ChildCmp extends ParentCmp {}
 
       TestBed.configureTestingModule({declarations: [ChildCmp]});
       const fixture = TestBed.createComponent(ChildCmp);
       fixture.detectChanges();
 
       const element = fixture.nativeElement;
-      if (ivyEnabled) {
-        expect(element.classList.contains('bar')).toBeTruthy();
-      }
+      expect(element.classList.contains('bar')).toBeTruthy();
       expect(element.classList.contains('foo')).toBeTruthy();
       expect(element.classList.contains('baz')).toBeTruthy();
     });
 
     it('should render host class and style on the root component', () => {
-      @Component({template: '...', host: {class: 'foo', style: 'color: red'}})
-      class MyApp {
-      }
+      @Component({
+        template: '...',
+        host: {class: 'foo', style: 'color: red'},
+        standalone: false,
+      })
+      class MyApp {}
 
       TestBed.configureTestingModule({declarations: [MyApp]});
       const fixture = TestBed.createComponent(MyApp);
@@ -78,7 +111,6 @@ describe('host bindings', () => {
       expect(element.style['color']).toEqual('red');
       expect(element.classList.contains('foo')).toBeTruthy();
     });
-
 
     it('should not cause problems if detectChanges is called when a property updates', () => {
       /**
@@ -93,7 +125,7 @@ describe('host bindings', () => {
        *   - That executes a **different template**, that has host bindings
        *     - this executes `setHostBindings`
        *     - Inside of `setHostBindings` we are currently updating the selected index **global
-       *       state** via `setActiveHostElement`.
+       *       state** via `setSelectedIndex`.
        * 3. We attempt to update the next property in the **original template**.
        *  - But the selected index has been altered, and we get errors.
        */
@@ -101,9 +133,9 @@ describe('host bindings', () => {
       @Component({
         selector: 'child',
         template: `...`,
+        standalone: false,
       })
-      class ChildCmp {
-      }
+      class ChildCmp {}
 
       @Component({
         selector: 'parent',
@@ -117,14 +149,14 @@ describe('host bindings', () => {
         host: {
           '[style.color]': 'color',
         },
+        standalone: false,
       })
       class ParentCmp {
         private _prop = '';
 
-        @ViewChild('template', {read: ViewContainerRef, static: false})
-        vcr: ViewContainerRef = null !;
+        @ViewChild('template', {read: ViewContainerRef}) vcr: ViewContainerRef = null!;
 
-        private child: ComponentRef<ChildCmp> = null !;
+        private child: ComponentRef<ChildCmp> = null!;
 
         @Input()
         set prop(value: string) {
@@ -137,35 +169,27 @@ describe('host bindings', () => {
           }
         }
 
-        get prop() { return this._prop; }
-
-        @Input()
-        prop2 = 0;
-
-        ngAfterViewInit() {
-          const factory = this.componentFactoryResolver.resolveComponentFactory(ChildCmp);
-          this.child = this.vcr.createComponent(factory);
+        get prop() {
+          return this._prop;
         }
 
-        constructor(private componentFactoryResolver: ComponentFactoryResolver) {}
+        @Input() prop2 = 0;
+
+        ngAfterViewInit() {
+          this.child = this.vcr.createComponent(ChildCmp);
+        }
       }
 
       @Component({
         template: `<parent [prop]="prop" [prop2]="prop2"></parent>`,
+        standalone: false,
       })
       class App {
         prop = 'a';
         prop2 = 1;
       }
 
-      @NgModule({
-        entryComponents: [ChildCmp],
-        declarations: [ChildCmp],
-      })
-      class ChildCmpModule {
-      }
-
-      TestBed.configureTestingModule({declarations: [App, ParentCmp], imports: [ChildCmpModule]});
+      TestBed.configureTestingModule({declarations: [App, ParentCmp, ChildCmp]});
       const fixture = TestBed.createComponent(App);
       fixture.detectChanges();
 
@@ -175,24 +199,332 @@ describe('host bindings', () => {
     });
   });
 
+  describe('with synthetic (animations) props', () => {
+    it('should work when directive contains synthetic props', () => {
+      @Directive({
+        selector: '[animationPropDir]',
+        standalone: false,
+      })
+      class AnimationPropDir {
+        @HostBinding('@myAnimation') myAnimation: string = 'color';
+      }
+
+      @Component({
+        selector: 'my-comp',
+        template: '<div animationPropDir>Some content</div>',
+        animations: [trigger('myAnimation', [state('color', style({color: 'red'}))])],
+        standalone: false,
+      })
+      class Comp {}
+
+      TestBed.configureTestingModule({
+        declarations: [Comp, AnimationPropDir],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(Comp);
+      fixture.detectChanges();
+      const queryResult = fixture.debugElement.query(By.directive(AnimationPropDir));
+      expect(queryResult.nativeElement.style.color).toBe('red');
+    });
+
+    it('should work when directive contains synthetic props and directive is applied to a component', () => {
+      @Directive({
+        selector: '[animationPropDir]',
+        standalone: false,
+      })
+      class AnimationPropDir {
+        @HostBinding('@myAnimation') myAnimation: string = 'color';
+      }
+
+      @Component({
+        selector: 'my-comp',
+        template: 'Some content',
+        animations: [trigger('myAnimation', [state('color', style({color: 'red'}))])],
+        standalone: false,
+      })
+      class Comp {}
+
+      @Component({
+        selector: 'app',
+        template: '<my-comp animationPropDir></my-comp>',
+        animations: [trigger('myAnimation', [state('color', style({color: 'green'}))])],
+        standalone: false,
+      })
+      class App {}
+
+      TestBed.configureTestingModule({
+        declarations: [App, Comp, AnimationPropDir],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+      const queryResult = fixture.debugElement.query(By.directive(AnimationPropDir));
+      expect(queryResult.nativeElement.style.color).toBe('green');
+    });
+
+    it('should work when component contains synthetic props', () => {
+      @Component({
+        selector: 'my-comp',
+        template: '<div>Some content/div>',
+        animations: [trigger('myAnimation', [state('color', style({color: 'red'}))])],
+        standalone: false,
+      })
+      class Comp {
+        @HostBinding('@myAnimation') myAnimation: string = 'color';
+      }
+
+      TestBed.configureTestingModule({
+        declarations: [Comp],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(Comp);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.style.color).toBe('red');
+    });
+
+    it('should work when child component contains synthetic props', () => {
+      @Component({
+        selector: 'my-comp',
+        template: '<div>Some content/div>',
+        animations: [trigger('myAnimation', [state('color', style({color: 'red'}))])],
+        standalone: false,
+      })
+      class Comp {
+        @HostBinding('@myAnimation') myAnimation: string = 'color';
+      }
+
+      @Component({
+        template: '<my-comp></my-comp>',
+        standalone: false,
+      })
+      class App {}
+
+      TestBed.configureTestingModule({
+        declarations: [App, Comp],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+      const queryResult = fixture.debugElement.query(By.directive(Comp));
+      expect(queryResult.nativeElement.style.color).toBe('red');
+    });
+
+    it('should work when component extends a directive that contains synthetic props', () => {
+      @Directive({
+        selector: 'animation-dir',
+        standalone: false,
+      })
+      class AnimationDir {
+        @HostBinding('@myAnimation') myAnimation: string = 'color';
+      }
+
+      @Component({
+        selector: 'my-comp',
+        template: '<div>Some content</div>',
+        animations: [trigger('myAnimation', [state('color', style({color: 'red'}))])],
+        standalone: false,
+      })
+      class Comp extends AnimationDir {}
+
+      TestBed.configureTestingModule({
+        declarations: [Comp, AnimationDir],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(Comp);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.style.color).toBe('red');
+    });
+
+    it('should work when directive contains synthetic listeners', async () => {
+      const events: string[] = [];
+
+      @Directive({
+        selector: '[animationPropDir]',
+        standalone: false,
+      })
+      class AnimationPropDir {
+        @HostBinding('@myAnimation') myAnimation: string = 'a';
+
+        @HostListener('@myAnimation.start')
+        onAnimationStart() {
+          events.push('@myAnimation.start');
+        }
+
+        @HostListener('@myAnimation.done')
+        onAnimationDone() {
+          events.push('@myAnimation.done');
+        }
+      }
+
+      @Component({
+        selector: 'my-comp',
+        template: '<div animationPropDir>Some content</div>',
+        animations: [
+          trigger('myAnimation', [state('a', style({color: 'yellow'})), transition('* => a', [])]),
+        ],
+        standalone: false,
+      })
+      class Comp {}
+
+      TestBed.configureTestingModule({
+        declarations: [Comp, AnimationPropDir],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(Comp);
+      fixture.detectChanges();
+      await fixture.whenStable(); // wait for animations to complete
+      const queryResult = fixture.debugElement.query(By.directive(AnimationPropDir));
+      expect(queryResult.nativeElement.style.color).toBe('yellow');
+      expect(events).toEqual(['@myAnimation.start', '@myAnimation.done']);
+    });
+
+    it('should work when component contains synthetic listeners', async () => {
+      const events: string[] = [];
+
+      @Component({
+        selector: 'my-comp',
+        template: '<div>Some content</div>',
+        animations: [
+          trigger('myAnimation', [state('a', style({color: 'yellow'})), transition('* => a', [])]),
+        ],
+        standalone: false,
+      })
+      class Comp {
+        @HostBinding('@myAnimation') myAnimation: string = 'a';
+
+        @HostListener('@myAnimation.start')
+        onAnimationStart() {
+          events.push('@myAnimation.start');
+        }
+
+        @HostListener('@myAnimation.done')
+        onAnimationDone() {
+          events.push('@myAnimation.done');
+        }
+      }
+
+      TestBed.configureTestingModule({
+        declarations: [Comp],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(Comp);
+      fixture.detectChanges();
+      await fixture.whenStable(); // wait for animations to complete
+      expect(fixture.nativeElement.style.color).toBe('yellow');
+      expect(events).toEqual(['@myAnimation.start', '@myAnimation.done']);
+    });
+
+    it('should work when child component contains synthetic listeners', async () => {
+      const events: string[] = [];
+
+      @Component({
+        selector: 'my-comp',
+        template: '<div>Some content</div>',
+        animations: [
+          trigger('myAnimation', [state('a', style({color: 'yellow'})), transition('* => a', [])]),
+        ],
+        standalone: false,
+      })
+      class Comp {
+        @HostBinding('@myAnimation') myAnimation: string = 'a';
+
+        @HostListener('@myAnimation.start')
+        onAnimationStart() {
+          events.push('@myAnimation.start');
+        }
+
+        @HostListener('@myAnimation.done')
+        onAnimationDone() {
+          events.push('@myAnimation.done');
+        }
+      }
+
+      @Component({
+        template: '<my-comp></my-comp>',
+        standalone: false,
+      })
+      class App {}
+
+      TestBed.configureTestingModule({
+        declarations: [App, Comp],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+      await fixture.whenStable(); // wait for animations to complete
+      const queryResult = fixture.debugElement.query(By.directive(Comp));
+      expect(queryResult.nativeElement.style.color).toBe('yellow');
+      expect(events).toEqual(['@myAnimation.start', '@myAnimation.done']);
+    });
+
+    it('should work when component extends a directive that contains synthetic listeners', async () => {
+      const events: string[] = [];
+
+      @Directive({
+        selector: 'animation-dir',
+        standalone: false,
+      })
+      class AnimationDir {
+        @HostBinding('@myAnimation') myAnimation: string = 'a';
+
+        @HostListener('@myAnimation.start')
+        onAnimationStart() {
+          events.push('@myAnimation.start');
+        }
+
+        @HostListener('@myAnimation.done')
+        onAnimationDone() {
+          events.push('@myAnimation.done');
+        }
+      }
+
+      @Component({
+        selector: 'my-comp',
+        template: '<div>Some content</div>',
+        animations: [
+          trigger('myAnimation', [state('a', style({color: 'yellow'})), transition('* => a', [])]),
+        ],
+        standalone: false,
+      })
+      class Comp extends AnimationDir {}
+
+      TestBed.configureTestingModule({
+        declarations: [Comp],
+        imports: [NoopAnimationsModule],
+      });
+      const fixture = TestBed.createComponent(Comp);
+      fixture.detectChanges();
+      await fixture.whenStable(); // wait for animations to complete
+      expect(fixture.nativeElement.style.color).toBe('yellow');
+      expect(events).toEqual(['@myAnimation.start', '@myAnimation.done']);
+    });
+  });
+
   describe('via @HostBinding', () => {
     it('should render styling for parent and sub-classed components in order', () => {
       @Component({
         template: `
         <child-and-parent-cmp></child-and-parent-cmp>
-      `
+      `,
+        standalone: false,
       })
-      class MyApp {
-      }
+      class MyApp {}
 
-      @Component({template: '...'})
+      @Component({
+        template: '...',
+        standalone: false,
+      })
       class ParentCmp {
         @HostBinding('style.width') width1 = '100px';
         @HostBinding('style.height') height1 = '100px';
         @HostBinding('style.opacity') opacity1 = '0.5';
       }
 
-      @Component({selector: 'child-and-parent-cmp', template: '...'})
+      @Component({
+        selector: 'child-and-parent-cmp',
+        template: '...',
+        standalone: false,
+      })
       class ChildCmp extends ParentCmp {
         @HostBinding('style.width') width2 = '200px';
         @HostBinding('style.height') height2 = '200px';
@@ -209,83 +541,110 @@ describe('host bindings', () => {
       expect(childElement.style.opacity).toEqual('0.5');
     });
 
-    onlyInIvy('[style.prop] and [class.name] prioritization is a new feature')
-        .it('should prioritize styling present in the order of directive hostBinding evaluation, but consider sub-classed directive styling to be the most important',
-            () => {
+    it('should prioritize styling present in the order of directive hostBinding evaluation, but consider sub-classed directive styling to be the most important', () => {
+      @Component({
+        template: '<div child-dir sibling-dir></div>',
+        standalone: false,
+      })
+      class MyApp {}
 
-              @Component({template: '<div child-dir sibling-dir></div>'})
-              class MyApp {
-              }
+      @Directive({
+        selector: '[parent-dir]',
+        standalone: false,
+      })
+      class ParentDir {
+        @HostBinding('style.width')
+        get width1() {
+          return '100px';
+        }
 
-              @Directive({selector: '[parent-dir]'})
-              class ParentDir {
-                @HostBinding('style.width')
-                get width1() { return '100px'; }
+        @HostBinding('style.height')
+        get height1() {
+          return '100px';
+        }
 
-                @HostBinding('style.height')
-                get height1() { return '100px'; }
+        @HostBinding('style.color')
+        get color1() {
+          return 'red';
+        }
+      }
 
-                @HostBinding('style.color')
-                get color1() { return 'red'; }
-              }
+      @Directive({
+        selector: '[child-dir]',
+        standalone: false,
+      })
+      class ChildDir extends ParentDir {
+        @HostBinding('style.width')
+        get width2() {
+          return '200px';
+        }
 
-              @Directive({selector: '[child-dir]'})
-              class ChildDir extends ParentDir {
-                @HostBinding('style.width')
-                get width2() { return '200px'; }
+        @HostBinding('style.height')
+        get height2() {
+          return '200px';
+        }
+      }
 
-                @HostBinding('style.height')
-                get height2() { return '200px'; }
-              }
+      @Directive({
+        selector: '[sibling-dir]',
+        standalone: false,
+      })
+      class SiblingDir {
+        @HostBinding('style.width')
+        get width3() {
+          return '300px';
+        }
 
-              @Directive({selector: '[sibling-dir]'})
-              class SiblingDir {
-                @HostBinding('style.width')
-                get width3() { return '300px'; }
+        @HostBinding('style.height')
+        get height3() {
+          return '300px';
+        }
 
-                @HostBinding('style.height')
-                get height3() { return '300px'; }
+        @HostBinding('style.opacity')
+        get opacity3() {
+          return '0.5';
+        }
 
-                @HostBinding('style.opacity')
-                get opacity3() { return '0.5'; }
+        @HostBinding('style.color')
+        get color1() {
+          return 'blue';
+        }
+      }
 
-                @HostBinding('style.color')
-                get color1() { return 'blue'; }
-              }
+      TestBed.configureTestingModule({declarations: [MyApp, ParentDir, SiblingDir, ChildDir]});
+      const fixture = TestBed.createComponent(MyApp);
+      const element = fixture.nativeElement;
+      fixture.detectChanges();
 
-              TestBed.configureTestingModule(
-                  {declarations: [MyApp, ParentDir, ChildDir, SiblingDir]});
-              const fixture = TestBed.createComponent(MyApp);
-              const element = fixture.nativeElement;
-              fixture.detectChanges();
+      const childElement = element.querySelector('div');
 
-              const childElement = element.querySelector('div');
+      // width/height values were set in all directives, but the sub-class directive
+      // (ChildDir) had priority over the parent directive (ParentDir) which is why its
+      // value won. It also won over Dir because the SiblingDir directive was declared
+      // later in `declarations`.
+      expect(childElement.style.width).toEqual('200px');
+      expect(childElement.style.height).toEqual('200px');
 
-              // width/height values were set in all directives, but the sub-class directive
-              // (ChildDir)
-              // had priority over the parent directive (ParentDir) which is why its value won. It
-              // also
-              // won over Dir because the SiblingDir directive was evaluated later on.
-              expect(childElement.style.width).toEqual('200px');
-              expect(childElement.style.height).toEqual('200px');
+      // ParentDir styled the color first before Dir
+      expect(childElement.style.color).toEqual('red');
 
-              // ParentDir styled the color first before Dir
-              expect(childElement.style.color).toEqual('red');
-
-              // Dir was the only directive to style opacity
-              expect(childElement.style.opacity).toEqual('0.5');
-            });
+      // Dir was the only directive to style opacity
+      expect(childElement.style.opacity).toEqual('0.5');
+    });
 
     it('should allow class-bindings to be placed on ng-container elements', () => {
       @Component({
         template: `
         <ng-container [class.foo]="true" dir-that-adds-other-classes>...</ng-container>
-      `
+      `,
+        standalone: false,
       })
-      class MyApp {
-      }
+      class MyApp {}
 
-      @Directive({selector: '[dir-that-adds-other-classes]'})
+      @Directive({
+        selector: '[dir-that-adds-other-classes]',
+        standalone: false,
+      })
       class DirThatAddsOtherClasses {
         @HostBinding('class.other-class') bool = true;
       }
@@ -296,25 +655,31 @@ describe('host bindings', () => {
         fixture.detectChanges();
       }).not.toThrow();
     });
-
   });
 
-  @Directive({selector: '[hostBindingDir]'})
+  @Directive({
+    selector: '[hostBindingDir]',
+    standalone: false,
+  })
   class HostBindingDir {
-    @HostBinding()
-    id = 'foo';
+    @HostBinding() id = 'foo';
   }
 
   it('should support host bindings in directives', () => {
-    @Directive({selector: '[dir]'})
+    @Directive({
+      selector: '[dir]',
+      standalone: false,
+    })
     class Dir {
-      @HostBinding('className')
-      klass = 'foo';
+      @HostBinding('className') klass = 'foo';
     }
 
-    @Component({template: '<span dir></span>'})
+    @Component({
+      template: '<span dir></span>',
+      standalone: false,
+    })
     class App {
-      @ViewChild(Dir, {static: false}) directiveInstance !: Dir;
+      @ViewChild(Dir) directiveInstance!: Dir;
     }
 
     TestBed.configureTestingModule({declarations: [App, Dir]});
@@ -330,12 +695,13 @@ describe('host bindings', () => {
     expect(element.innerHTML).toContain('class="bar"');
   });
 
-
   it('should support host bindings on root component', () => {
-    @Component({template: ''})
+    @Component({
+      template: '',
+      standalone: false,
+    })
     class HostBindingComp {
-      @HostBinding()
-      title = 'my-title';
+      @HostBinding() title = 'my-title';
     }
 
     TestBed.configureTestingModule({declarations: [HostBindingComp]});
@@ -362,12 +728,18 @@ describe('host bindings', () => {
       value = 'two';
     }
 
-    @Component({template: '', providers: [ServiceOne, ServiceTwo]})
+    @Component({
+      template: '',
+      providers: [ServiceOne, ServiceTwo],
+      standalone: false,
+    })
     class App {
-      constructor(public serviceOne: ServiceOne, public serviceTwo: ServiceTwo) {}
+      constructor(
+        public serviceOne: ServiceOne,
+        public serviceTwo: ServiceTwo,
+      ) {}
 
-      @HostBinding()
-      title = 'my-title';
+      @HostBinding() title = 'my-title';
     }
 
     TestBed.configureTestingModule({declarations: [App]});
@@ -385,14 +757,19 @@ describe('host bindings', () => {
   });
 
   it('should support host bindings on multiple nodes', () => {
-    @Directive({selector: '[someDir]'})
-    class SomeDir {
-    }
+    @Directive({
+      selector: '[someDir]',
+      standalone: false,
+    })
+    class SomeDir {}
 
-    @Component({selector: 'host-title-comp', template: ''})
+    @Component({
+      selector: 'host-title-comp',
+      template: '',
+      standalone: false,
+    })
     class HostTitleComp {
-      @HostBinding()
-      title = 'my-title';
+      @HostBinding() title = 'my-title';
     }
 
     @Component({
@@ -400,10 +777,11 @@ describe('host bindings', () => {
           <div hostBindingDir></div>
           <div someDir></div>
           <host-title-comp></host-title-comp>
-        `
+        `,
+      standalone: false,
     })
     class App {
-      @ViewChild(HostBindingDir, {static: false}) hostBindingDir !: HostBindingDir;
+      @ViewChild(HostBindingDir) hostBindingDir!: HostBindingDir;
     }
 
     TestBed.configureTestingModule({declarations: [App, SomeDir, HostTitleComp, HostBindingDir]});
@@ -416,26 +794,30 @@ describe('host bindings', () => {
     expect(hostBindingDiv.id).toEqual('foo');
     expect(hostTitleComp.title).toEqual('my-title');
 
-    fixture.componentInstance.hostBindingDir !.id = 'bar';
+    fixture.componentInstance.hostBindingDir!.id = 'bar';
     fixture.detectChanges();
     expect(hostBindingDiv.id).toEqual('bar');
   });
 
   it('should support consecutive components with host bindings', () => {
-    @Component({selector: 'host-binding-comp', template: ''})
+    @Component({
+      selector: 'host-binding-comp',
+      template: '',
+      standalone: false,
+    })
     class HostBindingComp {
-      @HostBinding()
-      id = 'blue';
+      @HostBinding() id = 'blue';
     }
 
     @Component({
       template: `
           <host-binding-comp></host-binding-comp>
           <host-binding-comp></host-binding-comp>
-        `
+        `,
+      standalone: false,
     })
     class App {
-      @ViewChildren(HostBindingComp) hostBindingComp !: QueryList<HostBindingComp>;
+      @ViewChildren(HostBindingComp) hostBindingComp!: QueryList<HostBindingComp>;
     }
 
     TestBed.configureTestingModule({declarations: [App, HostBindingComp]});
@@ -443,8 +825,9 @@ describe('host bindings', () => {
     fixture.detectChanges();
     const comps = fixture.componentInstance.hostBindingComp.toArray();
 
-    const hostBindingEls =
-        fixture.nativeElement.querySelectorAll('host-binding-comp') as NodeListOf<HTMLElement>;
+    const hostBindingEls = fixture.nativeElement.querySelectorAll(
+      'host-binding-comp',
+    ) as NodeListOf<HTMLElement>;
 
     expect(hostBindingEls.length).toBe(2);
 
@@ -462,47 +845,57 @@ describe('host bindings', () => {
     expect(hostBindingEls[1].id).toBe('red');
   });
 
+  it('should support dirs with host bindings on the same node as dirs without host bindings', () => {
+    @Directive({
+      selector: '[someDir]',
+      standalone: false,
+    })
+    class SomeDir {}
 
-  it('should support dirs with host bindings on the same node as dirs without host bindings',
-     () => {
-       @Directive({selector: '[someDir]'})
-       class SomeDir {
-       }
+    @Component({
+      template: '<div someDir hostBindingDir></div>',
+      standalone: false,
+    })
+    class App {
+      @ViewChild(HostBindingDir) hostBindingDir!: HostBindingDir;
+    }
 
-       @Component({template: '<div someDir hostBindingDir></div>'})
-       class App {
-         @ViewChild(HostBindingDir, {static: false}) hostBindingDir !: HostBindingDir;
-       }
+    TestBed.configureTestingModule({declarations: [App, SomeDir, HostBindingDir]});
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
 
-       TestBed.configureTestingModule({declarations: [App, SomeDir, HostBindingDir]});
-       const fixture = TestBed.createComponent(App);
-       fixture.detectChanges();
+    const hostBindingDiv = fixture.nativeElement.querySelector('div') as HTMLElement;
+    expect(hostBindingDiv.id).toEqual('foo');
 
-       const hostBindingDiv = fixture.nativeElement.querySelector('div') as HTMLElement;
-       expect(hostBindingDiv.id).toEqual('foo');
-
-       fixture.componentInstance.hostBindingDir !.id = 'bar';
-       fixture.detectChanges();
-       expect(hostBindingDiv.id).toEqual('bar');
-     });
-
-
+    fixture.componentInstance.hostBindingDir!.id = 'bar';
+    fixture.detectChanges();
+    expect(hostBindingDiv.id).toEqual('bar');
+  });
 
   it('should support host bindings that rely on values from init hooks', () => {
-    @Component({template: '', selector: 'init-hook-comp'})
+    @Component({
+      template: '',
+      selector: 'init-hook-comp',
+      standalone: false,
+    })
     class InitHookComp implements OnInit, OnChanges, DoCheck {
-      @Input()
-      inputValue = '';
+      @Input() inputValue = '';
 
       changesValue = '';
       initValue = '';
       checkValue = '';
 
-      ngOnChanges() { this.changesValue = 'changes'; }
+      ngOnChanges() {
+        this.changesValue = 'changes';
+      }
 
-      ngOnInit() { this.initValue = 'init'; }
+      ngOnInit() {
+        this.initValue = 'init';
+      }
 
-      ngDoCheck() { this.checkValue = 'check'; }
+      ngDoCheck() {
+        this.checkValue = 'check';
+      }
 
       @HostBinding('title')
       get value() {
@@ -510,7 +903,10 @@ describe('host bindings', () => {
       }
     }
 
-    @Component({template: '<init-hook-comp [inputValue]="value"></init-hook-comp>'})
+    @Component({
+      template: '<init-hook-comp [inputValue]="value"></init-hook-comp>',
+      standalone: false,
+    })
     class App {
       value = 'input';
     }
@@ -528,18 +924,22 @@ describe('host bindings', () => {
   });
 
   it('should support host bindings with the same name as inputs', () => {
-    @Directive({selector: '[hostBindingDir]'})
+    @Directive({
+      selector: '[hostBindingDir]',
+      standalone: false,
+    })
     class HostBindingInputDir {
-      @Input()
-      disabled = false;
+      @Input() disabled = false;
 
-      @HostBinding('disabled')
-      hostDisabled = false;
+      @HostBinding('disabled') hostDisabled = false;
     }
 
-    @Component({template: '<input hostBindingDir [disabled]="isDisabled">'})
+    @Component({
+      template: '<input hostBindingDir [disabled]="isDisabled">',
+      standalone: false,
+    })
     class App {
-      @ViewChild(HostBindingInputDir, {static: false}) hostBindingInputDir !: HostBindingInputDir;
+      @ViewChild(HostBindingInputDir) hostBindingInputDir!: HostBindingInputDir;
       isDisabled = true;
     }
 
@@ -564,18 +964,21 @@ describe('host bindings', () => {
   });
 
   it('should support host bindings on second template pass', () => {
-    @Component({selector: 'parent', template: '<div hostBindingDir></div>'})
-    class Parent {
-    }
+    @Component({
+      selector: 'parent',
+      template: '<div hostBindingDir></div>',
+      standalone: false,
+    })
+    class Parent {}
 
     @Component({
       template: `
           <parent></parent>
           <parent></parent>
-        `
+        `,
+      standalone: false,
     })
-    class App {
-    }
+    class App {}
 
     TestBed.configureTestingModule({declarations: [App, Parent, HostBindingDir]});
     const fixture = TestBed.createComponent(App);
@@ -592,7 +995,8 @@ describe('host bindings', () => {
           <div *ngFor="let row of rows">
             <p hostBindingDir></p>
           </div>
-        `
+        `,
+      standalone: false,
     })
     class App {
       rows: number[] = [];
@@ -610,26 +1014,33 @@ describe('host bindings', () => {
   });
 
   it('should support component with host bindings and array literals', () => {
-    @Component({selector: 'host-binding-comp', template: ''})
+    @Component({
+      selector: 'host-binding-comp',
+      template: '',
+      standalone: false,
+    })
     class HostBindingComp {
-      @HostBinding()
-      id = 'my-id';
+      @HostBinding() id = 'my-id';
     }
 
-    @Component({selector: 'name-comp', template: ''})
+    @Component({
+      selector: 'name-comp',
+      template: '',
+      standalone: false,
+    })
     class NameComp {
-      @Input()
-      names !: string[];
+      @Input() names!: string[];
     }
 
     @Component({
       template: `
           <name-comp [names]="['Nancy', name, 'Ned']"></name-comp>
           <host-binding-comp></host-binding-comp>
-        `
+        `,
+      standalone: false,
     })
     class App {
-      @ViewChild(NameComp, {static: false}) nameComp !: NameComp;
+      @ViewChild(NameComp) nameComp!: NameComp;
       name = '';
     }
 
@@ -654,22 +1065,25 @@ describe('host bindings', () => {
     expect(nameComp.names).toEqual(['Nancy', 'my-id', 'Ned']);
   });
 
-
   // Note: This is a contrived example. For feature parity with render2, we should make sure it
   // works in this way (see https://stackblitz.com/edit/angular-cbqpbe), but a more realistic
   // example would be an animation host binding with a literal defining the animation config.
   // When animation support is added, we should add another test for that case.
   it('should support host bindings that contain array literals', () => {
-    @Component({selector: 'name-comp', template: ''})
+    @Component({
+      selector: 'name-comp',
+      template: '',
+      standalone: false,
+    })
     class NameComp {
-      @Input()
-      names !: string[];
+      @Input() names!: string[];
     }
 
     @Component({
       selector: 'host-binding-comp',
       host: {'[id]': `['red', id]`, '[dir]': `dir`, '[title]': `[title, otherTitle]`},
-      template: ''
+      template: '',
+      standalone: false,
     })
     class HostBindingComp {
       id = 'blue';
@@ -682,11 +1096,12 @@ describe('host bindings', () => {
       template: `
           <name-comp [names]="[name, 'Nancy', otherName]"></name-comp>
           <host-binding-comp></host-binding-comp>
-        `
+        `,
+      standalone: false,
     })
     class App {
-      @ViewChild(HostBindingComp, {static: false}) hostBindingComp !: HostBindingComp;
-      @ViewChild(NameComp, {static: false}) nameComp !: NameComp;
+      @ViewChild(HostBindingComp) hostBindingComp!: HostBindingComp;
+      @ViewChild(NameComp) nameComp!: NameComp;
       name = '';
       otherName = '';
     }
@@ -704,11 +1119,11 @@ describe('host bindings', () => {
     expect(hostBindingEl.id).toBe('red,blue');
     expect(hostBindingEl.dir).toBe('ltr');
     expect(hostBindingEl.title).toBe('my title,other title');
-    expect(nameComp !.names).toEqual(['Frank', 'Nancy', 'Joe']);
+    expect(nameComp!.names).toEqual(['Frank', 'Nancy', 'Joe']);
 
-    const firstArray = nameComp !.names;
+    const firstArray = nameComp!.names;
     fixture.detectChanges();
-    expect(firstArray).toBe(nameComp !.names);
+    expect(firstArray).toBe(nameComp!.names);
 
     hostBindingComp.id = 'green';
     hostBindingComp.dir = 'rtl';
@@ -722,46 +1137,69 @@ describe('host bindings', () => {
   it('should support directives with and without allocHostVars on the same component', () => {
     let events: string[] = [];
 
-    @Directive({selector: '[hostDir]', host: {'[title]': `[title, 'other title']`}})
+    @Directive({
+      selector: '[hostDir]',
+      host: {'[title]': `[title, 'other title']`},
+      standalone: false,
+    })
     class HostBindingDir {
       title = 'my title';
     }
 
-    @Directive({selector: '[hostListenerDir]'})
+    @Directive({
+      selector: '[hostListenerDir]',
+      standalone: false,
+    })
     class HostListenerDir {
       @HostListener('click')
-      onClick() { events.push('click!'); }
+      onClick() {
+        events.push('click!');
+      }
     }
 
-    @Component({template: '<button hostListenerDir hostDir>Click</button>'})
-    class App {
-    }
+    @Component({
+      template: '<button hostListenerDir hostDir>Click</button>',
+      standalone: false,
+    })
+    class App {}
 
     TestBed.configureTestingModule({declarations: [App, HostBindingDir, HostListenerDir]});
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('button') !;
+    const button = fixture.nativeElement.querySelector('button')!;
     button.click();
     expect(events).toEqual(['click!']);
     expect(button.title).toEqual('my title,other title');
   });
 
   it('should support host bindings with literals from multiple directives', () => {
-    @Component({selector: 'host-binding-comp', host: {'[id]': `['red', id]`}, template: ''})
+    @Component({
+      selector: 'host-binding-comp',
+      host: {'[id]': `['red', id]`},
+      template: '',
+      standalone: false,
+    })
     class HostBindingComp {
       id = 'blue';
     }
 
-    @Directive({selector: '[hostDir]', host: {'[title]': `[title, 'other title']`}})
+    @Directive({
+      selector: '[hostDir]',
+      host: {'[title]': `[title, 'other title']`},
+      standalone: false,
+    })
     class HostBindingDir {
       title = 'my title';
     }
 
-    @Component({template: '<host-binding-comp hostDir></host-binding-comp>'})
+    @Component({
+      template: '<host-binding-comp hostDir></host-binding-comp>',
+      standalone: false,
+    })
     class App {
-      @ViewChild(HostBindingComp, {static: false}) hostBindingComp !: HostBindingComp;
-      @ViewChild(HostBindingDir, {static: false}) hostBindingDir !: HostBindingDir;
+      @ViewChild(HostBindingComp) hostBindingComp!: HostBindingComp;
+      @ViewChild(HostBindingDir) hostBindingDir!: HostBindingDir;
     }
 
     TestBed.configureTestingModule({declarations: [App, HostBindingComp, HostBindingDir]});
@@ -787,8 +1225,9 @@ describe('host bindings', () => {
       host: {
         // Use `attr` since IE doesn't support the `title` property on all elements.
         '[attr.id]': `condition ? ['red', id] : 'green'`,
-        '[attr.title]': `otherCondition ? [title] : 'other title'`
-      }
+        '[attr.title]': `otherCondition ? [title] : 'other title'`,
+      },
+      standalone: false,
     })
     class HostBindingComp {
       condition = true;
@@ -797,9 +1236,12 @@ describe('host bindings', () => {
       title = 'blue';
     }
 
-    @Component({template: `<host-binding-comp></host-binding-comp>{{ name }}`})
+    @Component({
+      template: `<host-binding-comp></host-binding-comp>{{ name }}`,
+      standalone: false,
+    })
     class App {
-      @ViewChild(HostBindingComp, {static: false}) hostBindingComp !: HostBindingComp;
+      @ViewChild(HostBindingComp) hostBindingComp!: HostBindingComp;
       name = '';
     }
 
@@ -811,9 +1253,6 @@ describe('host bindings', () => {
     fixture.componentInstance.name = 'Ned';
     fixture.detectChanges();
 
-    // Note that we assert for each binding individually, rather than checking against
-    // innerHTML, because IE10 changes the attribute order and makes it inconsistent with
-    // all other browsers.
     expect(hostElement.id).toBe('red,blue');
     expect(hostElement.title).toBe('blue');
     expect(fixture.nativeElement.innerHTML.endsWith('Ned')).toBe(true);
@@ -830,67 +1269,107 @@ describe('host bindings', () => {
     expect(hostElement.title).toBe('other title');
   });
 
-  onlyInIvy('Host bindings do not get merged in ViewEngine')
-      .it('should work correctly with inherited directives with hostBindings', () => {
-        @Directive({selector: '[superDir]', host: {'[id]': 'id'}})
-        class SuperDirective {
-          id = 'my-id';
-        }
+  it('should merge attributes on host and template', () => {
+    @Directive({
+      selector: '[dir1]',
+      host: {id: 'dir1'},
+      standalone: false,
+    })
+    class MyDir1 {}
+    @Directive({
+      selector: '[dir2]',
+      host: {id: 'dir2'},
+      standalone: false,
+    })
+    class MyDir2 {}
 
-        @Directive({selector: '[subDir]', host: {'[title]': 'title'}})
-        class SubDirective extends SuperDirective {
-          title = 'my-title';
-        }
+    @Component({
+      template: `<div dir1 dir2 id="tmpl"></div>`,
+      standalone: false,
+    })
+    class MyComp {}
 
-        @Component({
-          template: `
+    TestBed.configureTestingModule({declarations: [MyComp, MyDir1, MyDir2]});
+    const fixture = TestBed.createComponent(MyComp);
+    fixture.detectChanges();
+    const div: HTMLElement = fixture.debugElement.nativeElement.firstChild;
+    expect(div.id).toEqual('tmpl');
+  });
+
+  it('should work correctly with inherited directives with hostBindings', () => {
+    @Directive({
+      selector: '[superDir]',
+      host: {'[id]': 'id'},
+      standalone: false,
+    })
+    class SuperDirective {
+      id = 'my-id';
+    }
+
+    @Directive({
+      selector: '[subDir]',
+      host: {'[title]': 'title'},
+      standalone: false,
+    })
+    class SubDirective extends SuperDirective {
+      title = 'my-title';
+    }
+
+    @Component({
+      template: `
         <div subDir></div>
         <div superDir></div>
-      `
-        })
-        class App {
-          @ViewChild(SubDirective, {static: false}) subDir !: SubDirective;
-          @ViewChild(SuperDirective, {static: false}) superDir !: SuperDirective;
-        }
+      `,
+      standalone: false,
+    })
+    class App {
+      @ViewChild(SubDirective) subDir!: SubDirective;
+      @ViewChild(SuperDirective) superDir!: SuperDirective;
+    }
 
-        TestBed.configureTestingModule({declarations: [App, SuperDirective, SubDirective]});
-        const fixture = TestBed.createComponent(App);
-        fixture.detectChanges();
-        const els = fixture.nativeElement.querySelectorAll('div') as NodeListOf<HTMLElement>;
+    TestBed.configureTestingModule({declarations: [App, SuperDirective, SubDirective]});
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const els = fixture.nativeElement.querySelectorAll('div') as NodeListOf<HTMLElement>;
 
-        const firstDivEl = els[0];
-        const secondDivEl = els[1];
+    const firstDivEl = els[0];
+    const secondDivEl = els[1];
 
-        // checking first div element with inherited directive
-        expect(firstDivEl.id).toEqual('my-id');
-        expect(firstDivEl.title).toEqual('my-title');
+    // checking first div element with inherited directive
+    expect(firstDivEl.id).toEqual('my-id');
+    expect(firstDivEl.title).toEqual('my-title');
 
-        fixture.componentInstance.subDir.title = 'new-title';
-        fixture.detectChanges();
-        expect(firstDivEl.id).toEqual('my-id');
-        expect(firstDivEl.title).toEqual('new-title');
+    fixture.componentInstance.subDir.title = 'new-title';
+    fixture.detectChanges();
+    expect(firstDivEl.id).toEqual('my-id');
+    expect(firstDivEl.title).toEqual('new-title');
 
-        fixture.componentInstance.subDir.id = 'new-id';
-        fixture.detectChanges();
-        expect(firstDivEl.id).toEqual('new-id');
-        expect(firstDivEl.title).toEqual('new-title');
+    fixture.componentInstance.subDir.id = 'new-id';
+    fixture.detectChanges();
+    expect(firstDivEl.id).toEqual('new-id');
+    expect(firstDivEl.title).toEqual('new-title');
 
-        // checking second div element with simple directive
-        expect(secondDivEl.id).toEqual('my-id');
+    // checking second div element with simple directive
+    expect(secondDivEl.id).toEqual('my-id');
 
-        fixture.componentInstance.superDir.id = 'new-id';
-        fixture.detectChanges();
-        expect(secondDivEl.id).toEqual('new-id');
-      });
+    fixture.componentInstance.superDir.id = 'new-id';
+    fixture.detectChanges();
+    expect(secondDivEl.id).toEqual('new-id');
+  });
 
   it('should support host attributes', () => {
-    @Directive({selector: '[hostAttributeDir]', host: {'role': 'listbox'}})
-    class HostAttributeDir {
-    }
+    @Directive({
+      selector: '[hostAttributeDir]',
+      host: {'role': 'listbox'},
+      standalone: false,
+    })
+    class HostAttributeDir {}
 
-    @Component({template: '<div hostAttributeDir></div>'})
-    class App {
-    }
+    @Component({
+      template: '<div hostAttributeDir></div>',
+      standalone: false,
+    })
+    class App {}
 
     TestBed.configureTestingModule({declarations: [App, HostAttributeDir]});
     const fixture = TestBed.createComponent(App);
@@ -901,11 +1380,11 @@ describe('host bindings', () => {
     @Component({
       selector: 'host-binding-comp',
       template: '<ng-content></ng-content>',
-      host: {'[id]': 'foos.length'}
+      host: {'[id]': 'foos.length'},
+      standalone: false,
     })
     class HostBindingWithContentChildren {
-      @ContentChildren('foo')
-      foos !: QueryList<any>;
+      @ContentChildren('foo') foos!: QueryList<any>;
     }
 
     @Component({
@@ -914,10 +1393,10 @@ describe('host bindings', () => {
             <div #foo></div>
             <div #foo></div>
           </host-binding-comp>
-        `
+        `,
+      standalone: false,
     })
-    class App {
-    }
+    class App {}
 
     TestBed.configureTestingModule({declarations: [App, HostBindingWithContentChildren]});
     const fixture = TestBed.createComponent(App);
@@ -928,16 +1407,25 @@ describe('host bindings', () => {
   });
 
   it('should support host bindings dependent on content hooks', () => {
-    @Component({selector: 'host-binding-comp', template: '', host: {'[id]': 'myValue'}})
+    @Component({
+      selector: 'host-binding-comp',
+      template: '',
+      host: {'[id]': 'myValue'},
+      standalone: false,
+    })
     class HostBindingWithContentHooks implements AfterContentInit {
       myValue = 'initial';
 
-      ngAfterContentInit() { this.myValue = 'after-content'; }
+      ngAfterContentInit() {
+        this.myValue = 'after-content';
+      }
     }
 
-    @Component({template: '<host-binding-comp></host-binding-comp>'})
-    class App {
-    }
+    @Component({
+      template: '<host-binding-comp></host-binding-comp>',
+      standalone: false,
+    })
+    class App {}
 
     TestBed.configureTestingModule({declarations: [App, HostBindingWithContentHooks]});
     const fixture = TestBed.createComponent(App);
@@ -948,25 +1436,32 @@ describe('host bindings', () => {
   });
 
   describe('styles', () => {
-
     it('should bind to host styles', () => {
-      @Component(
-          {selector: 'host-binding-to-styles', host: {'[style.width.px]': 'width'}, template: ''})
+      @Component({
+        selector: 'host-binding-to-styles',
+        host: {'[style.width.px]': 'width'},
+        template: '',
+        standalone: false,
+      })
       class HostBindingToStyles {
         width = 2;
       }
 
-      @Component({template: '<host-binding-to-styles></host-binding-to-styles>'})
+      @Component({
+        template: '<host-binding-to-styles></host-binding-to-styles>',
+        standalone: false,
+      })
       class App {
-        @ViewChild(HostBindingToStyles, {static: false}) hostBindingDir !: HostBindingToStyles;
+        @ViewChild(HostBindingToStyles) hostBindingDir!: HostBindingToStyles;
       }
 
       TestBed.configureTestingModule({declarations: [App, HostBindingToStyles]});
       const fixture = TestBed.createComponent(App);
       fixture.detectChanges();
 
-      const hostBindingEl =
-          fixture.nativeElement.querySelector('host-binding-to-styles') as HTMLElement;
+      const hostBindingEl = fixture.nativeElement.querySelector(
+        'host-binding-to-styles',
+      ) as HTMLElement;
       expect(hostBindingEl.style.width).toEqual('2px');
 
       fixture.componentInstance.hostBindingDir.width = 5;
@@ -975,19 +1470,29 @@ describe('host bindings', () => {
     });
 
     it('should bind to host styles on containers', () => {
-      @Directive({selector: '[hostStyles]', host: {'[style.width.px]': 'width'}})
+      @Directive({
+        selector: '[hostStyles]',
+        host: {'[style.width.px]': 'width'},
+        standalone: false,
+      })
       class HostBindingToStyles {
         width = 2;
       }
 
-      @Directive({selector: '[containerDir]'})
+      @Directive({
+        selector: '[containerDir]',
+        standalone: false,
+      })
       class ContainerDir {
         constructor(public vcr: ViewContainerRef) {}
       }
 
-      @Component({template: '<div hostStyles containerDir></div>'})
+      @Component({
+        template: '<div hostStyles containerDir></div>',
+        standalone: false,
+      })
       class App {
-        @ViewChild(HostBindingToStyles, {static: false}) hostBindingDir !: HostBindingToStyles;
+        @ViewChild(HostBindingToStyles) hostBindingDir!: HostBindingToStyles;
       }
 
       TestBed.configureTestingModule({declarations: [App, HostBindingToStyles, ContainerDir]});
@@ -1003,13 +1508,19 @@ describe('host bindings', () => {
     });
 
     it('should apply static host classes', () => {
-      @Component({selector: 'static-host-class', host: {'class': 'mat-toolbar'}, template: ''})
-      class StaticHostClass {
-      }
+      @Component({
+        selector: 'static-host-class',
+        host: {'class': 'mat-toolbar'},
+        template: '',
+        standalone: false,
+      })
+      class StaticHostClass {}
 
-      @Component({template: '<static-host-class></static-host-class>'})
-      class App {
-      }
+      @Component({
+        template: '<static-host-class></static-host-class>',
+        standalone: false,
+      })
+      class App {}
 
       TestBed.configureTestingModule({declarations: [App, StaticHostClass]});
       const fixture = TestBed.createComponent(App);
@@ -1021,31 +1532,43 @@ describe('host bindings', () => {
   });
 
   describe('sanitization', () => {
-    function identity(value: any) { return value; }
+    function identity(value: any) {
+      return value;
+    }
     function verify(
-        tag: string, prop: string, value: any, expectedSanitizedValue: any, bypassFn: Function,
-        isAttribute: boolean = true, throws: boolean = false) {
+      tag: string,
+      prop: string,
+      value: any,
+      expectedSanitizedValue: any,
+      bypassFn: Function,
+      isAttribute: boolean = true,
+      throws: boolean = false,
+    ) {
       it(`should sanitize <${tag} ${prop}> ${isAttribute ? 'properties' : 'attributes'}`, () => {
         @Directive({
           selector: '[unsafeUrlHostBindingDir]',
           host: {
             [`[${isAttribute ? 'attr.' : ''}${prop}]`]: 'value',
-          }
+          },
+          standalone: false,
         })
         class UnsafeDir {
           value: any = value;
         }
 
-        @Component({template: `<${tag} unsafeUrlHostBindingDir></${tag}>`})
+        @Component({
+          template: `<${tag} unsafeUrlHostBindingDir></${tag}>`,
+          standalone: false,
+        })
         class App {
-          @ViewChild(UnsafeDir, {static: false}) unsafeDir !: UnsafeDir;
+          @ViewChild(UnsafeDir) unsafeDir!: UnsafeDir;
         }
 
         TestBed.configureTestingModule({declarations: [App, UnsafeDir]});
         const fixture = TestBed.createComponent(App);
         fixture.detectChanges();
-        const el = fixture.nativeElement.querySelector(tag) !;
-        const current = () => isAttribute ? el.getAttribute(prop) : (el as any)[prop];
+        const el = fixture.nativeElement.querySelector(tag)!;
+        const current = () => (isAttribute ? el.getAttribute(prop) : (el as any)[prop]);
 
         fixture.componentInstance.unsafeDir.value = value;
         fixture.detectChanges();
@@ -1062,23 +1585,172 @@ describe('host bindings', () => {
     }
 
     verify(
-        'a', 'href', 'javascript:alert(1)', 'unsafe:javascript:alert(1)',
-        bypassSanitizationTrustUrl);
+      'a',
+      'href',
+      'javascript:alert(1)',
+      'unsafe:javascript:alert(1)',
+      bypassSanitizationTrustUrl,
+    );
     verify('a', 'href', 'javascript:alert(1.1)', 'unsafe:javascript:alert(1.1)', identity);
     verify(
-        'a', 'href', 'javascript:alert(1.2)', 'unsafe:javascript:alert(1.2)',
-        bypassSanitizationTrustStyle, true, true);
+      'a',
+      'href',
+      'javascript:alert(1.2)',
+      'unsafe:javascript:alert(1.2)',
+      bypassSanitizationTrustStyle,
+      true,
+      true,
+    );
     verify(
-        'blockquote', 'cite', 'javascript:alert(2)', 'unsafe:javascript:alert(2)',
-        bypassSanitizationTrustUrl);
+      'blockquote',
+      'cite',
+      'javascript:alert(2)',
+      'unsafe:javascript:alert(2)',
+      bypassSanitizationTrustUrl,
+    );
     verify('blockquote', 'cite', 'javascript:alert(2.1)', 'unsafe:javascript:alert(2.1)', identity);
     verify(
-        'blockquote', 'cite', 'javascript:alert(2.2)', 'unsafe:javascript:alert(2.2)',
-        bypassSanitizationTrustHtml, true, true);
+      'blockquote',
+      'cite',
+      'javascript:alert(2.2)',
+      'unsafe:javascript:alert(2.2)',
+      bypassSanitizationTrustHtml,
+      true,
+      true,
+    );
     verify(
-        'b', 'innerHTML', '<img src="javascript:alert(3)">',
-        '<img src="unsafe:javascript:alert(3)">', bypassSanitizationTrustHtml,
-        /* isAttribute */ false);
+      'b',
+      'innerHTML',
+      '<img src="javascript:alert(3)">',
+      '<img src="unsafe:javascript:alert(3)">',
+      bypassSanitizationTrustHtml,
+      /* isAttribute */ false,
+    );
   });
 
+  describe('host binding on containers', () => {
+    @Directive({
+      selector: '[staticHostAtt]',
+      host: {'static': 'attr'},
+      standalone: false,
+    })
+    class StaticHostAttr {
+      constructor() {}
+    }
+
+    @Directive({
+      selector: '[dynamicHostAtt]',
+      host: {'[attr.dynamic]': '"dynamic"'},
+      standalone: false,
+    })
+    class DynamicHostAttr {
+      constructor() {}
+    }
+
+    it('should fail with expected error with ng-container', () => {
+      @Component({
+        selector: 'my-app',
+        template: `
+          <ng-template #ref></ng-template>
+          <ng-container [ngTemplateOutlet]="ref" staticHostAtt dynamicHostAtt></ng-container>
+        `,
+        standalone: false,
+      })
+      class App {}
+
+      const comp = TestBed.configureTestingModule({
+        declarations: [App, StaticHostAttr, DynamicHostAttr],
+      }).createComponent(App);
+      // TODO(FW-2202): binding static attrs won't throw an error. We should be more consistent.
+      expect(() => comp.detectChanges()).toThrowError(
+        /Attempted to set attribute `dynamic` on a container node. Host bindings are not valid on ng-container or ng-template./,
+      );
+    });
+
+    it('should fail with expected error with ng-template', () => {
+      @Component({
+        selector: 'my-app',
+        template: ` <ng-template staticHostAtt dynamicHostAtt></ng-template> `,
+        standalone: false,
+      })
+      class App {}
+
+      const comp = TestBed.configureTestingModule({
+        declarations: [App, StaticHostAttr, DynamicHostAttr],
+      }).createComponent(App);
+      // TODO(FW-2202): binding static attrs won't throw an error. We should be more consistent.
+      expect(() => comp.detectChanges()).toThrowError(
+        /Attempted to set attribute `dynamic` on a container node. Host bindings are not valid on ng-container or ng-template./,
+      );
+    });
+  });
+
+  describe('host bindings on edge case properties', () => {
+    it('should handle host bindings with the same name as a primitive value', () => {
+      @Directive({
+        selector: '[dir]',
+        host: {
+          '[class.a]': 'true',
+          '[class.b]': 'false',
+        },
+        standalone: false,
+      })
+      class MyDirective {
+        @HostBinding('class.c') true: any;
+        @HostBinding('class.d') false: any;
+      }
+
+      @Component({
+        template: '<span dir></span>',
+        standalone: false,
+      })
+      class MyApp {
+        @ViewChild(MyDirective) dir!: MyDirective;
+      }
+
+      TestBed.configureTestingModule({declarations: [MyApp, MyDirective]});
+      const fixture = TestBed.createComponent(MyApp);
+      fixture.detectChanges();
+      const span = fixture.nativeElement.querySelector('span');
+      expect(span.className).toBe('a');
+
+      fixture.componentInstance.dir.true = 1;
+      fixture.componentInstance.dir.false = 2;
+      fixture.detectChanges();
+
+      expect(span.className).toBe('a c d');
+    });
+
+    it('should handle host bindings with quoted names', () => {
+      @Directive({
+        selector: '[dir]',
+        standalone: false,
+      })
+      class MyDirective {
+        @HostBinding('class.a') 'is-a': any;
+        @HostBinding('class.b') 'is-"b"': any = true;
+        @HostBinding('class.c') '"is-c"': any;
+      }
+
+      @Component({
+        template: '<span dir></span>',
+        standalone: false,
+      })
+      class MyApp {
+        @ViewChild(MyDirective) dir!: MyDirective;
+      }
+
+      TestBed.configureTestingModule({declarations: [MyApp, MyDirective]});
+      const fixture = TestBed.createComponent(MyApp);
+      fixture.detectChanges();
+      const span = fixture.nativeElement.querySelector('span');
+      expect(span.className).toBe('b');
+
+      fixture.componentInstance.dir['is-a'] = 1;
+      fixture.componentInstance.dir['"is-c"'] = 2;
+      fixture.detectChanges();
+
+      expect(span.className).toBe('b a c');
+    });
+  });
 });

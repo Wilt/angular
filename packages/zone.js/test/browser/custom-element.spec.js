@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 /*
@@ -16,32 +16,58 @@ function customElementsSupport() {
 }
 customElementsSupport.message = 'window.customElements';
 
-describe('customElements', function() {
+function supportsFormAssociatedElements() {
+  return 'attachInternals' in HTMLElement.prototype;
+}
+
+describe('customElements', function () {
   const testZone = Zone.current.fork({name: 'test'});
   const bridge = {
     connectedCallback: () => {},
     disconnectedCallback: () => {},
     adoptedCallback: () => {},
-    attributeChangedCallback: () => {}
+    attributeChangedCallback: () => {},
+    formAssociatedCallback: () => {},
   };
 
   class TestCustomElement extends HTMLElement {
-    constructor() { super(); }
+    constructor() {
+      super();
+    }
 
-    static get observedAttributes() { return ['attr1', 'attr2']; }
+    static get observedAttributes() {
+      return ['attr1', 'attr2'];
+    }
 
-    connectedCallback() { return bridge.connectedCallback(); }
+    connectedCallback() {
+      return bridge.connectedCallback();
+    }
 
-    disconnectedCallback() { return bridge.disconnectedCallback(); }
+    disconnectedCallback() {
+      return bridge.disconnectedCallback();
+    }
 
     attributeChangedCallback(attrName, oldVal, newVal) {
       return bridge.attributeChangedCallback(attrName, oldVal, newVal);
     }
 
-    adoptedCallback() { return bridge.adoptedCallback(); }
+    adoptedCallback() {
+      return bridge.adoptedCallback();
+    }
   }
 
-  testZone.run(() => { customElements.define('x-test', TestCustomElement); });
+  class TestFormAssociatedCustomElement extends HTMLElement {
+    static formAssociated = true;
+
+    formAssociatedCallback() {
+      return bridge.formAssociatedCallback();
+    }
+  }
+
+  testZone.run(() => {
+    customElements.define('x-test', TestCustomElement);
+    customElements.define('x-test-form-associated', TestFormAssociatedCustomElement);
+  });
 
   let elt;
 
@@ -50,6 +76,7 @@ describe('customElements', function() {
     bridge.disconnectedCallback = () => {};
     bridge.attributeChangedCallback = () => {};
     bridge.adoptedCallback = () => {};
+    bridge.formAssociatedCallback = () => {};
   });
 
   afterEach(() => {
@@ -59,8 +86,8 @@ describe('customElements', function() {
     }
   });
 
-  it('should work with connectedCallback', function(done) {
-    bridge.connectedCallback = function() {
+  it('should work with connectedCallback', function (done) {
+    bridge.connectedCallback = function () {
       expect(Zone.current.name).toBe(testZone.name);
       done();
     };
@@ -69,8 +96,8 @@ describe('customElements', function() {
     document.body.appendChild(elt);
   });
 
-  it('should work with disconnectedCallback', function(done) {
-    bridge.disconnectedCallback = function() {
+  it('should work with disconnectedCallback', function (done) {
+    bridge.disconnectedCallback = function () {
       expect(Zone.current.name).toBe(testZone.name);
       done();
     };
@@ -81,8 +108,8 @@ describe('customElements', function() {
     elt = null;
   });
 
-  it('should work with attributeChanged', function(done) {
-    bridge.attributeChangedCallback = function(attrName, oldVal, newVal) {
+  it('should work with attributeChanged', function (done) {
+    bridge.attributeChangedCallback = function (attrName, oldVal, newVal) {
       expect(Zone.current.name).toBe(testZone.name);
       expect(attrName).toEqual('attr1');
       expect(newVal).toEqual('value1');
@@ -92,5 +119,21 @@ describe('customElements', function() {
     elt = document.createElement('x-test');
     document.body.appendChild(elt);
     elt.setAttribute('attr1', 'value1');
+  });
+
+  it('should work with formAssociatedCallback', function (done) {
+    if (!supportsFormAssociatedElements()) {
+      return;
+    }
+
+    bridge.formAssociatedCallback = function () {
+      expect(Zone.current.name).toBe(testZone.name);
+      done();
+    };
+
+    elt = document.createElement('x-test-form-associated');
+    const form = document.createElement('form');
+    form.appendChild(elt);
+    document.body.appendChild(form);
   });
 });

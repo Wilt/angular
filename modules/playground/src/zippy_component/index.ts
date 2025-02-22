@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {Component, NgModule} from '@angular/core';
@@ -19,18 +19,20 @@ import {Zippy} from './app/zippy';
       This is some content.
     </zippy>
     <ul>
-      <li *ngFor="let  log of logs">{{log}}</li>
+      <li *ngFor="let log of logs">{{ log }}</li>
     </ul>
-  `
+  `,
+  standalone: false,
 })
 export class ZippyApp {
   logs: string[] = [];
 
-  pushLog(log: string) { this.logs.push(log); }
+  pushLog(log: string) {
+    this.logs.push(log);
+  }
 }
 
 @NgModule({declarations: [ZippyApp, Zippy], bootstrap: [ZippyApp], imports: [BrowserModule]})
-export class ExampleModule {
-}
+export class ExampleModule {}
 
 platformBrowserDynamic().bootstrapModule(ExampleModule);

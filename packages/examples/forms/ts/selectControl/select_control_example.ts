@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 // #docregion Component
@@ -20,10 +20,11 @@ import {Component} from '@angular/core';
         </option>
       </select>
     </form>
-    
-     <p>Form value: {{ f.value | json }}</p>
-     <!-- example value: {state: {name: 'New York', abbrev: 'NY'} } -->
+
+    <p>Form value: {{ f.value | json }}</p>
+    <!-- example value: {state: {name: 'New York', abbrev: 'NY'} } -->
   `,
+  standalone: false,
 })
 export class SelectControlComp {
   states = [

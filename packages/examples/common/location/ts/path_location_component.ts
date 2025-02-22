@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 // #docregion LocationComponent
@@ -15,12 +15,17 @@ import {Component} from '@angular/core';
   providers: [Location, {provide: LocationStrategy, useClass: PathLocationStrategy}],
   template: `
     <h1>PathLocationStrategy</h1>
-    Current URL is: <code>{{location.path()}}</code><br>
-    Normalize: <code>/foo/bar/</code> is: <code>{{location.normalize('foo/bar')}}</code><br>
-  `
+    Current URL is: <code>{{ location.path() }}</code
+    ><br />
+    Normalize: <code>/foo/bar/</code> is: <code>{{ location.normalize('foo/bar') }}</code
+    ><br />
+  `,
+  standalone: false,
 })
 export class PathLocationComponent {
   location: Location;
-  constructor(location: Location) { this.location = location; }
+  constructor(location: Location) {
+    this.location = location;
+  }
 }
 // #enddocregion

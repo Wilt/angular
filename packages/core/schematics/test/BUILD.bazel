@@ -3,29 +3,35 @@ load("//tools:defaults.bzl", "jasmine_node_test", "ts_library")
 ts_library(
     name = "test_lib",
     testonly = True,
-    srcs = glob(["**/*.ts"]),
-    data = [
-        "test-migrations.json",
-        "//packages/core/schematics:migrations.json",
-    ],
+    srcs = glob(["*.ts"]),
     deps = [
-        "//packages/core/schematics/migrations/injectable-pipe",
-        "//packages/core/schematics/migrations/missing-injectable",
-        "//packages/core/schematics/migrations/move-document",
-        "//packages/core/schematics/migrations/renderer-to-renderer2",
-        "//packages/core/schematics/migrations/static-queries",
-        "//packages/core/schematics/migrations/template-var-assignment",
-        "//packages/core/schematics/migrations/undecorated-classes-with-di",
         "//packages/core/schematics/utils",
+        "//packages/core/schematics/utils/tsurge",
         "@npm//@angular-devkit/core",
         "@npm//@angular-devkit/schematics",
+        "@npm//@bazel/runfiles",
         "@npm//@types/shelljs",
         "@npm//tslint",
     ],
 )
 
 jasmine_node_test(
-    name = "google3",
+    name = "test",
+    data = [
+        "//packages/core/schematics:bundles",
+        "//packages/core/schematics:collection.json",
+        "//packages/core/schematics:migrations.json",
+        "//packages/core/schematics/ng-generate/cleanup-unused-imports:static_files",
+        "//packages/core/schematics/ng-generate/control-flow-migration:static_files",
+        "//packages/core/schematics/ng-generate/inject-migration:static_files",
+        "//packages/core/schematics/ng-generate/output-migration:static_files",
+        "//packages/core/schematics/ng-generate/route-lazy-loading:static_files",
+        "//packages/core/schematics/ng-generate/self-closing-tags-migration:static_files",
+        "//packages/core/schematics/ng-generate/signal-input-migration:static_files",
+        "//packages/core/schematics/ng-generate/signal-queries-migration:static_files",
+        "//packages/core/schematics/ng-generate/signals:static_files",
+        "//packages/core/schematics/ng-generate/standalone-migration:static_files",
+    ],
     deps = [
         ":test_lib",
         "@npm//shelljs",

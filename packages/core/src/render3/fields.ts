@@ -1,19 +1,18 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {getClosureSafeProperty} from '../util/property';
 
-export const NG_COMPONENT_DEF = getClosureSafeProperty({ngComponentDef: getClosureSafeProperty});
-export const NG_DIRECTIVE_DEF = getClosureSafeProperty({ngDirectiveDef: getClosureSafeProperty});
-export const NG_PIPE_DEF = getClosureSafeProperty({ngPipeDef: getClosureSafeProperty});
-export const NG_MODULE_DEF = getClosureSafeProperty({ngModuleDef: getClosureSafeProperty});
-export const NG_LOCALE_ID_DEF = getClosureSafeProperty({ngLocaleIdDef: getClosureSafeProperty});
-export const NG_BASE_DEF = getClosureSafeProperty({ngBaseDef: getClosureSafeProperty});
+export const NG_COMP_DEF = getClosureSafeProperty({ɵcmp: getClosureSafeProperty});
+export const NG_DIR_DEF = getClosureSafeProperty({ɵdir: getClosureSafeProperty});
+export const NG_PIPE_DEF = getClosureSafeProperty({ɵpipe: getClosureSafeProperty});
+export const NG_MOD_DEF = getClosureSafeProperty({ɵmod: getClosureSafeProperty});
+export const NG_FACTORY_DEF = getClosureSafeProperty({ɵfac: getClosureSafeProperty});
 
 /**
  * If a directive is diPublic, bloomAdd sets a property on the type with this constant as
@@ -22,3 +21,13 @@ export const NG_BASE_DEF = getClosureSafeProperty({ngBaseDef: getClosureSafeProp
  */
 // TODO(misko): This is wrong. The NG_ELEMENT_ID should never be minified.
 export const NG_ELEMENT_ID = getClosureSafeProperty({__NG_ELEMENT_ID__: getClosureSafeProperty});
+
+/**
+ * The `NG_ENV_ID` field on a DI token indicates special processing in the `EnvironmentInjector`:
+ * getting such tokens from the `EnvironmentInjector` will bypass the standard DI resolution
+ * strategy and instead will return implementation produced by the `NG_ENV_ID` factory function.
+ *
+ * This particular retrieval of DI tokens is mostly done to eliminate circular dependencies and
+ * improve tree-shaking.
+ */
+export const NG_ENV_ID = getClosureSafeProperty({__NG_ENV_ID__: getClosureSafeProperty});

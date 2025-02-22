@@ -1,23 +1,21 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-
 
 import {Component, NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
-@Component({selector: 'my-component', template: 'text'})
-class MyAppComponent {
-}
-
-// #docregion providers
+@Component({
+  selector: 'my-component',
+  template: 'text',
+  standalone: false,
+})
+class MyAppComponent {}
 @NgModule({imports: [BrowserModule], bootstrap: [MyAppComponent]})
-class AppModule {
-}
+class AppModule {}
 platformBrowserDynamic().bootstrapModule(AppModule);
-// #enddocregion

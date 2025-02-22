@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {Component, Directive, ElementRef, Injectable, NgModule, Renderer2} from '@angular/core';
@@ -18,7 +18,10 @@ export class GreetingService {
 
 // Directives are light-weight. They don't allow new
 // expression contexts (use @Component for those needs).
-@Directive({selector: '[red]'})
+@Directive({
+  selector: '[red]',
+  standalone: false,
+})
 export class RedDec {
   // ElementRef is always injectable and it wraps the element on which the
   // directive was found by the compiler.
@@ -29,7 +32,7 @@ export class RedDec {
 
 // Angular supports 2 basic types of directives:
 // - Component - the basic building blocks of Angular apps. Backed by
-//   ShadowDom.(http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom/)
+//   ShadowDom. (https://www.html5rocks.com/en/tutorials/webcomponents/shadowdom/)
 // - Directive - add behavior to existing elements.
 
 @Component({
@@ -42,19 +45,23 @@ export class RedDec {
   viewProviders: [GreetingService],
   // Expressions in the template (like {{greeting}}) are evaluated in the
   // context of the HelloCmp class below.
-  template: `<div class="greeting">{{greeting}} <span red>world</span>!</div>
-           <button class="changeButton" (click)="changeGreeting()">change greeting</button>`
+  template: `<div class="greeting">{{ greeting }} <span red>world</span>!</div>
+    <button class="changeButton" (click)="changeGreeting()">change greeting</button>`,
+  standalone: false,
 })
 export class HelloCmp {
   greeting: string;
 
-  constructor(service: GreetingService) { this.greeting = service.greeting; }
+  constructor(service: GreetingService) {
+    this.greeting = service.greeting;
+  }
 
-  changeGreeting(): void { this.greeting = 'howdy'; }
+  changeGreeting(): void {
+    this.greeting = 'howdy';
+  }
 }
 
 @NgModule({declarations: [HelloCmp, RedDec], bootstrap: [HelloCmp], imports: [BrowserModule]})
-export class ExampleModule {
-}
+export class ExampleModule {}
 
 platformBrowserDynamic().bootstrapModule(ExampleModule);

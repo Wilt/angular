@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 /**
@@ -31,7 +31,7 @@ export abstract class UrlCodec {
    *
    * @param path The path string or object
    */
-  abstract encodeSearch(search: string|{[k: string]: unknown}): string;
+  abstract encodeSearch(search: string | {[k: string]: unknown}): string;
 
   /**
    * Decodes the search objects from the provided string
@@ -61,7 +61,6 @@ export abstract class UrlCodec {
    */
   abstract normalize(href: string): string;
 
-
   /**
    * Normalizes the URL from the provided string, search, hash, and base URL parameters
    *
@@ -70,8 +69,12 @@ export abstract class UrlCodec {
    * @param hash The has string
    * @param baseUrl The base URL for the URL
    */
-  abstract normalize(path: string, search: {[k: string]: unknown}, hash: string, baseUrl?: string):
-      string;
+  abstract normalize(
+    path: string,
+    search: {[k: string]: unknown},
+    hash: string,
+    baseUrl?: string,
+  ): string;
 
   /**
    * Checks whether the two strings are equal
@@ -86,15 +89,18 @@ export abstract class UrlCodec {
    * @param url The full URL string
    * @param base The base for the URL
    */
-  abstract parse(url: string, base?: string): {
-    href: string,
-    protocol: string,
-    host: string,
-    search: string,
-    hash: string,
-    hostname: string,
-    port: string,
-    pathname: string
+  abstract parse(
+    url: string,
+    base?: string,
+  ): {
+    href: string;
+    protocol: string;
+    host: string;
+    search: string;
+    hash: string;
+    hostname: string;
+    port: string;
+    pathname: string;
   };
 }
 
@@ -116,11 +122,11 @@ export class AngularJSUrlCodec implements UrlCodec {
     }
 
     path = segments.join('/');
-    return _stripIndexHtml((path && path[0] !== '/' && '/' || '') + path);
+    return _stripIndexHtml(((path && path[0] !== '/' && '/') || '') + path);
   }
 
   // https://github.com/angular/angular.js/blob/864c7f0/src/ng/location.js#L42
-  encodeSearch(search: string|{[k: string]: unknown}): string {
+  encodeSearch(search: string | {[k: string]: unknown}): string {
     if (typeof search === 'string') {
       search = parseKeyValue(search);
     }
@@ -152,7 +158,9 @@ export class AngularJSUrlCodec implements UrlCodec {
   }
 
   // https://github.com/angular/angular.js/blob/864c7f0/src/ng/location.js#L72
-  decodeSearch(search: string) { return parseKeyValue(search); }
+  decodeSearch(search: string) {
+    return parseKeyValue(search);
+  }
 
   // https://github.com/angular/angular.js/blob/864c7f0/src/ng/location.js#L73
   decodeHash(hash: string) {
@@ -164,8 +172,12 @@ export class AngularJSUrlCodec implements UrlCodec {
   // https://github.com/angular/angular.js/blob/864c7f0/src/ng/location.js#L42
   normalize(href: string): string;
   normalize(path: string, search: {[k: string]: unknown}, hash: string, baseUrl?: string): string;
-  normalize(pathOrHref: string, search?: {[k: string]: unknown}, hash?: string, baseUrl?: string):
-      string {
+  normalize(
+    pathOrHref: string,
+    search?: {[k: string]: unknown},
+    hash?: string,
+    baseUrl?: string,
+  ): string {
     if (arguments.length === 1) {
       const parsed = this.parse(pathOrHref, baseUrl);
 
@@ -173,16 +185,20 @@ export class AngularJSUrlCodec implements UrlCodec {
         return parsed;
       }
 
-      const serverUrl =
-          `${parsed.protocol}://${parsed.hostname}${parsed.port ? ':' + parsed.port : ''}`;
+      const serverUrl = `${parsed.protocol}://${parsed.hostname}${
+        parsed.port ? ':' + parsed.port : ''
+      }`;
 
       return this.normalize(
-          this.decodePath(parsed.pathname), this.decodeSearch(parsed.search),
-          this.decodeHash(parsed.hash), serverUrl);
+        this.decodePath(parsed.pathname),
+        this.decodeSearch(parsed.search),
+        this.decodeHash(parsed.hash),
+        serverUrl,
+      );
     } else {
       const encPath = this.encodePath(pathOrHref);
-      const encSearch = search && this.encodeSearch(search) || '';
-      const encHash = hash && this.encodeHash(hash) || '';
+      const encSearch = (search && this.encodeSearch(search)) || '';
+      const encHash = (hash && this.encodeHash(hash)) || '';
 
       let joinedPath = (baseUrl || '') + encPath;
 
@@ -193,12 +209,15 @@ export class AngularJSUrlCodec implements UrlCodec {
     }
   }
 
-  areEqual(valA: string, valB: string) { return this.normalize(valA) === this.normalize(valB); }
+  areEqual(valA: string, valB: string) {
+    return this.normalize(valA) === this.normalize(valB);
+  }
 
   // https://github.com/angular/angular.js/blob/864c7f0/src/ng/urlUtils.js#L60
   parse(url: string, base?: string) {
     try {
-      const parsed = new URL(url, base);
+      // Safari 12 throws an error when the URL constructor is called with an undefined base.
+      const parsed = !base ? new URL(url) : new URL(url, base);
       return {
         href: parsed.href,
         protocol: parsed.protocol ? parsed.protocol.replace(/:$/, '') : '',
@@ -207,7 +226,7 @@ export class AngularJSUrlCodec implements UrlCodec {
         hash: parsed.hash ? parsed.hash.replace(/^#/, '') : '',
         hostname: parsed.hostname,
         port: parsed.port,
-        pathname: (parsed.pathname.charAt(0) === '/') ? parsed.pathname : '/' + parsed.pathname
+        pathname: parsed.pathname.charAt(0) === '/' ? parsed.pathname : '/' + parsed.pathname,
       };
     } catch (e) {
       throw new Error(`Invalid URL (${url}) with base (${base})`);
@@ -222,12 +241,10 @@ function _stripIndexHtml(url: string): string {
 /**
  * Tries to decode the URI component without throwing an exception.
  *
- * @private
  * @param str value potential URI component to check.
- * @returns {boolean} True if `value` can be decoded
- * with the decodeURIComponent function.
+ * @returns the decoded URI if it can be decoded or else `undefined`.
  */
-function tryDecodeURIComponent(value: string) {
+function tryDecodeURIComponent(value: string): string | undefined {
   try {
     return decodeURIComponent(value);
   } catch (e) {
@@ -236,11 +253,9 @@ function tryDecodeURIComponent(value: string) {
   }
 }
 
-
 /**
  * Parses an escaped url query string into key-value pairs. Logic taken from
  * https://github.com/angular/angular.js/blob/864c7f0/src/Angular.js#L1382
- * @returns {Object.<string,boolean|Array>}
  */
 function parseKeyValue(keyValue: string): {[k: string]: unknown} {
   const obj: {[k: string]: unknown} = {};
@@ -280,22 +295,23 @@ function toKeyValue(obj: {[k: string]: unknown}) {
     if (Array.isArray(value)) {
       value.forEach((arrayValue) => {
         parts.push(
-            encodeUriQuery(key, true) +
-            (arrayValue === true ? '' : '=' + encodeUriQuery(arrayValue, true)));
+          encodeUriQuery(key, true) +
+            (arrayValue === true ? '' : '=' + encodeUriQuery(arrayValue, true)),
+        );
       });
     } else {
       parts.push(
-          encodeUriQuery(key, true) +
-          (value === true ? '' : '=' + encodeUriQuery(value as any, true)));
+        encodeUriQuery(key, true) +
+          (value === true ? '' : '=' + encodeUriQuery(value as any, true)),
+      );
     }
   }
   return parts.length ? parts.join('&') : '';
 }
 
-
 /**
  * We need our custom method because encodeURIComponent is too aggressive and doesn't follow
- * http://www.ietf.org/rfc/rfc3986.txt with regards to the character set (pchar) allowed in path
+ * https://tools.ietf.org/html/rfc3986 with regards to the character set (pchar) allowed in path
  * segments:
  *    segment       = *pchar
  *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
@@ -307,17 +323,13 @@ function toKeyValue(obj: {[k: string]: unknown}) {
  * Logic from https://github.com/angular/angular.js/blob/864c7f0/src/Angular.js#L1437
  */
 function encodeUriSegment(val: string) {
-  return encodeUriQuery(val, true)
-      .replace(/%26/gi, '&')
-      .replace(/%3D/gi, '=')
-      .replace(/%2B/gi, '+');
+  return encodeUriQuery(val, true).replace(/%26/g, '&').replace(/%3D/gi, '=').replace(/%2B/gi, '+');
 }
-
 
 /**
  * This method is intended for encoding *key* or *value* parts of query component. We need a custom
  * method because encodeURIComponent is too aggressive and encodes stuff that doesn't have to be
- * encoded per http://tools.ietf.org/html/rfc3986:
+ * encoded per https://tools.ietf.org/html/rfc3986:
  *    query         = *( pchar / "/" / "?" )
  *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
  *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
@@ -329,10 +341,10 @@ function encodeUriSegment(val: string) {
  */
 function encodeUriQuery(val: string, pctEncodeSpaces: boolean = false) {
   return encodeURIComponent(val)
-      .replace(/%40/gi, '@')
-      .replace(/%3A/gi, ':')
-      .replace(/%24/g, '$')
-      .replace(/%2C/gi, ',')
-      .replace(/%3B/gi, ';')
-      .replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+    .replace(/%40/g, '@')
+    .replace(/%3A/gi, ':')
+    .replace(/%24/g, '$')
+    .replace(/%2C/gi, ',')
+    .replace(/%3B/gi, ';')
+    .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
 }

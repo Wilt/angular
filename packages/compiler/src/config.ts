@@ -1,45 +1,37 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import {CompileIdentifierMetadata} from './compile_metadata';
 import {MissingTranslationStrategy, ViewEncapsulation} from './core';
-import {Identifiers} from './identifiers';
-import * as o from './output/output_ast';
 import {noUndefined} from './util';
 
 export class CompilerConfig {
-  public defaultEncapsulation: ViewEncapsulation|null;
-  public useJit: boolean;
-  public jitDevMode: boolean;
-  public missingTranslation: MissingTranslationStrategy|null;
+  public defaultEncapsulation: ViewEncapsulation | null;
   public preserveWhitespaces: boolean;
   public strictInjectionParameters: boolean;
 
-  constructor(
-      {defaultEncapsulation = ViewEncapsulation.Emulated, useJit = true, jitDevMode = false,
-       missingTranslation = null, preserveWhitespaces, strictInjectionParameters}: {
-        defaultEncapsulation?: ViewEncapsulation,
-        useJit?: boolean,
-        jitDevMode?: boolean,
-        missingTranslation?: MissingTranslationStrategy|null,
-        preserveWhitespaces?: boolean,
-        strictInjectionParameters?: boolean,
-      } = {}) {
+  constructor({
+    defaultEncapsulation = ViewEncapsulation.Emulated,
+    preserveWhitespaces,
+    strictInjectionParameters,
+  }: {
+    defaultEncapsulation?: ViewEncapsulation;
+    preserveWhitespaces?: boolean;
+    strictInjectionParameters?: boolean;
+  } = {}) {
     this.defaultEncapsulation = defaultEncapsulation;
-    this.useJit = !!useJit;
-    this.jitDevMode = !!jitDevMode;
-    this.missingTranslation = missingTranslation;
     this.preserveWhitespaces = preserveWhitespacesDefault(noUndefined(preserveWhitespaces));
     this.strictInjectionParameters = strictInjectionParameters === true;
   }
 }
 
 export function preserveWhitespacesDefault(
-    preserveWhitespacesOption: boolean | null, defaultSetting = false): boolean {
+  preserveWhitespacesOption: boolean | null,
+  defaultSetting = false,
+): boolean {
   return preserveWhitespacesOption === null ? defaultSetting : preserveWhitespacesOption;
 }

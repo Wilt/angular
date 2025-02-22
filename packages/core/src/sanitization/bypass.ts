@@ -1,13 +1,12 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import {assertEqual} from '../util/assert';
-
+import {XSS_SECURITY_URL} from '../error_details_base_url';
 
 export const enum BypassType {
   Url = 'URL',
@@ -59,51 +58,69 @@ export interface SafeUrl extends SafeValue {}
  */
 export interface SafeResourceUrl extends SafeValue {}
 
-
 abstract class SafeValueImpl implements SafeValue {
-  constructor(public changingThisBreaksApplicationSecurity: string) {
-    // empty
-  }
+  constructor(public changingThisBreaksApplicationSecurity: string) {}
 
   abstract getTypeName(): string;
 
   toString() {
-    return `SafeValue must use [property]=binding: ${this.changingThisBreaksApplicationSecurity}` +
-        ` (see http://g.co/ng/security#xss)`;
+    return (
+      `SafeValue must use [property]=binding: ${this.changingThisBreaksApplicationSecurity}` +
+      ` (see ${XSS_SECURITY_URL})`
+    );
   }
 }
 
 class SafeHtmlImpl extends SafeValueImpl implements SafeHtml {
-  getTypeName() { return BypassType.Html; }
+  override getTypeName() {
+    return BypassType.Html;
+  }
 }
 class SafeStyleImpl extends SafeValueImpl implements SafeStyle {
-  getTypeName() { return BypassType.Style; }
+  override getTypeName() {
+    return BypassType.Style;
+  }
 }
 class SafeScriptImpl extends SafeValueImpl implements SafeScript {
-  getTypeName() { return BypassType.Script; }
+  override getTypeName() {
+    return BypassType.Script;
+  }
 }
 class SafeUrlImpl extends SafeValueImpl implements SafeUrl {
-  getTypeName() { return BypassType.Url; }
+  override getTypeName() {
+    return BypassType.Url;
+  }
 }
 class SafeResourceUrlImpl extends SafeValueImpl implements SafeResourceUrl {
-  getTypeName() { return BypassType.ResourceUrl; }
+  override getTypeName() {
+    return BypassType.ResourceUrl;
+  }
 }
 
-export function unwrapSafeValue(value: SafeValue): string {
-  return value instanceof SafeValueImpl ?
-      (value as SafeValueImpl).changingThisBreaksApplicationSecurity :
-      '';
+export function unwrapSafeValue(value: SafeValue): string;
+export function unwrapSafeValue<T>(value: T): T;
+export function unwrapSafeValue<T>(value: T | SafeValue): T {
+  return value instanceof SafeValueImpl
+    ? (value.changingThisBreaksApplicationSecurity as any as T)
+    : (value as any as T);
 }
 
-
 export function allowSanitizationBypassAndThrow(
-    value: any, type: BypassType.Html): value is SafeHtml;
+  value: any,
+  type: BypassType.Html,
+): value is SafeHtml;
 export function allowSanitizationBypassAndThrow(
-    value: any, type: BypassType.ResourceUrl): value is SafeResourceUrl;
+  value: any,
+  type: BypassType.ResourceUrl,
+): value is SafeResourceUrl;
 export function allowSanitizationBypassAndThrow(
-    value: any, type: BypassType.Script): value is SafeScript;
+  value: any,
+  type: BypassType.Script,
+): value is SafeScript;
 export function allowSanitizationBypassAndThrow(
-    value: any, type: BypassType.Style): value is SafeStyle;
+  value: any,
+  type: BypassType.Style,
+): value is SafeStyle;
 export function allowSanitizationBypassAndThrow(value: any, type: BypassType.Url): value is SafeUrl;
 export function allowSanitizationBypassAndThrow(value: any, type: BypassType): boolean;
 export function allowSanitizationBypassAndThrow(value: any, type: BypassType): boolean {
@@ -111,15 +128,13 @@ export function allowSanitizationBypassAndThrow(value: any, type: BypassType): b
   if (actualType != null && actualType !== type) {
     // Allow ResourceURLs in URL contexts, they are strictly more trusted.
     if (actualType === BypassType.ResourceUrl && type === BypassType.Url) return true;
-    throw new Error(
-        `Required a safe ${type}, got a ${actualType} (see http://g.co/ng/security#xss)`);
+    throw new Error(`Required a safe ${type}, got a ${actualType} (see ${XSS_SECURITY_URL})`);
   }
   return actualType === type;
 }
 
-export function getSanitizationBypassType(value: any): BypassType|null {
-  return value instanceof SafeValueImpl && (value as SafeValueImpl).getTypeName() as BypassType ||
-      null;
+export function getSanitizationBypassType(value: any): BypassType | null {
+  return (value instanceof SafeValueImpl && (value.getTypeName() as BypassType)) || null;
 }
 
 /**

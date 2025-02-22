@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {InjectionToken, Injector} from '@angular/core';
@@ -15,24 +15,26 @@ export class MultiMetric extends Metric {
     return [
       {
         provide: _CHILDREN,
-        useFactory: (injector: Injector) => childTokens.map(token => injector.get(token)),
-        deps: [Injector]
+        useFactory: (injector: Injector) => childTokens.map((token) => injector.get(token)),
+        deps: [Injector],
       },
       {
         provide: MultiMetric,
         useFactory: (children: Metric[]) => new MultiMetric(children),
-        deps: [_CHILDREN]
-      }
+        deps: [_CHILDREN],
+      },
     ];
   }
 
-  constructor(private _metrics: Metric[]) { super(); }
+  constructor(private _metrics: Metric[]) {
+    super();
+  }
 
   /**
    * Starts measuring
    */
-  beginMeasure(): Promise<any> {
-    return Promise.all(this._metrics.map(metric => metric.beginMeasure()));
+  override beginMeasure(): Promise<any> {
+    return Promise.all(this._metrics.map((metric) => metric.beginMeasure()));
   }
 
   /**
@@ -40,23 +42,28 @@ export class MultiMetric extends Metric {
    * since the begin call.
    * @param restart: Whether to restart right after this.
    */
-  endMeasure(restart: boolean): Promise<{[key: string]: any}> {
-    return Promise.all(this._metrics.map(metric => metric.endMeasure(restart)))
-        .then(values => mergeStringMaps(<any>values));
+  override endMeasure(restart: boolean): Promise<{[key: string]: any}> {
+    return Promise.all(this._metrics.map((metric) => metric.endMeasure(restart))).then((values) =>
+      mergeStringMaps(<any>values),
+    );
   }
 
   /**
    * Describes the metrics provided by this metric implementation.
    * (e.g. units, ...)
    */
-  describe(): {[key: string]: any} {
+  override describe(): {[key: string]: any} {
     return mergeStringMaps(this._metrics.map((metric) => metric.describe()));
   }
 }
 
 function mergeStringMaps(maps: {[key: string]: string}[]): {[key: string]: string} {
   const result: {[key: string]: string} = {};
-  maps.forEach(map => { Object.keys(map).forEach(prop => { result[prop] = map[prop]; }); });
+  maps.forEach((map) => {
+    Object.keys(map).forEach((prop) => {
+      result[prop] = map[prop];
+    });
+  });
   return result;
 }
 

@@ -1,20 +1,16 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {Expression} from '@angular/compiler';
-import * as ts from 'typescript';
+import ts from 'typescript';
 
+import {AmbientImport} from '../../reflection';
 import {identifierOfNode} from '../../util/src/typescript';
-
-export enum ImportMode {
-  UseExistingImport,
-  ForceNewImport,
-}
 
 export interface OwningModule {
   specifier: string;
@@ -45,7 +41,7 @@ export class Reference<T extends ts.Node = ts.Node> {
    *
    * If `bestGuessOwningModule` is `null`, then it's likely the node came from the current program.
    */
-  readonly bestGuessOwningModule: OwningModule|null;
+  readonly bestGuessOwningModule: OwningModule | null;
 
   private identifiers: ts.Identifier[] = [];
 
@@ -57,10 +53,21 @@ export class Reference<T extends ts.Node = ts.Node> {
    */
   synthetic = false;
 
-  private _alias: Expression|null = null;
+  private _alias: Expression | null = null;
 
-  constructor(readonly node: T, bestGuessOwningModule: OwningModule|null = null) {
-    this.bestGuessOwningModule = bestGuessOwningModule;
+  readonly isAmbient: boolean;
+
+  constructor(
+    readonly node: T,
+    bestGuessOwningModule: OwningModule | AmbientImport | null = null,
+  ) {
+    if (bestGuessOwningModule === AmbientImport) {
+      this.isAmbient = true;
+      this.bestGuessOwningModule = null;
+    } else {
+      this.isAmbient = false;
+      this.bestGuessOwningModule = bestGuessOwningModule as OwningModule | null;
+    }
 
     const id = identifierOfNode(node);
     if (id !== null) {
@@ -72,7 +79,7 @@ export class Reference<T extends ts.Node = ts.Node> {
    * The best guess at which module specifier owns this particular reference, or `null` if there
    * isn't one.
    */
-  get ownedByModuleGuess(): string|null {
+  get ownedByModuleGuess(): string | null {
     if (this.bestGuessOwningModule !== null) {
       return this.bestGuessOwningModule.specifier;
     } else {
@@ -85,7 +92,9 @@ export class Reference<T extends ts.Node = ts.Node> {
    *
    * See `bestGuessOwningModule`.
    */
-  get hasOwningModuleGuess(): boolean { return this.bestGuessOwningModule !== null; }
+  get hasOwningModuleGuess(): boolean {
+    return this.bestGuessOwningModule !== null;
+  }
 
   /**
    * A name for the node, if one is available.
@@ -93,37 +102,92 @@ export class Reference<T extends ts.Node = ts.Node> {
    * This is only suited for debugging. Any actual references to this node should be made with
    * `ts.Identifier`s (see `getIdentityIn`).
    */
-  get debugName(): string|null {
+  get debugName(): string | null {
     const id = identifierOfNode(this.node);
     return id !== null ? id.text : null;
   }
 
-  get alias(): Expression|null { return this._alias; }
-
+  get alias(): Expression | null {
+    return this._alias;
+  }
 
   /**
    * Record a `ts.Identifier` by which it's valid to refer to this node, within the context of this
    * `Reference`.
    */
-  addIdentifier(identifier: ts.Identifier): void { this.identifiers.push(identifier); }
+  addIdentifier(identifier: ts.Identifier): void {
+    this.identifiers.push(identifier);
+  }
 
   /**
    * Get a `ts.Identifier` within this `Reference` that can be used to refer within the context of a
    * given `ts.SourceFile`, if any.
    */
-  getIdentityIn(context: ts.SourceFile): ts.Identifier|null {
-    return this.identifiers.find(id => id.getSourceFile() === context) || null;
+  getIdentityIn(context: ts.SourceFile): ts.Identifier | null {
+    return this.identifiers.find((id) => id.getSourceFile() === context) || null;
+  }
+
+  /**
+   * Get a `ts.Identifier` for this `Reference` that exists within the given expression.
+   *
+   * This is very useful for producing `ts.Diagnostic`s that reference `Reference`s that were
+   * extracted from some larger expression, as it can be used to pinpoint the `ts.Identifier` within
+   * the expression from which the `Reference` originated.
+   */
+  getIdentityInExpression(expr: ts.Expression): ts.Identifier | null {
+    const sf = expr.getSourceFile();
+    return (
+      this.identifiers.find((id) => {
+        if (id.getSourceFile() !== sf) {
+          return false;
+        }
+
+        // This identifier is a match if its position lies within the given expression.
+        return id.pos >= expr.pos && id.end <= expr.end;
+      }) || null
+    );
+  }
+
+  /**
+   * Given the 'container' expression from which this `Reference` was extracted, produce a
+   * `ts.Expression` to use in a diagnostic which best indicates the position within the container
+   * expression that generated the `Reference`.
+   *
+   * For example, given a `Reference` to the class 'Bar' and the containing expression:
+   * `[Foo, Bar, Baz]`, this function would attempt to return the `ts.Identifier` for `Bar` within
+   * the array. This could be used to produce a nice diagnostic context:
+   *
+   * ```text
+   * [Foo, Bar, Baz]
+   *       ~~~
+   * ```
+   *
+   * If no specific node can be found, then the `fallback` expression is used, which defaults to the
+   * entire containing expression.
+   */
+  getOriginForDiagnostics(
+    container: ts.Expression,
+    fallback: ts.Expression = container,
+  ): ts.Expression {
+    const id = this.getIdentityInExpression(container);
+    return id !== null ? id : fallback;
   }
 
   cloneWithAlias(alias: Expression): Reference<T> {
-    const ref = new Reference(this.node, this.bestGuessOwningModule);
+    const ref = new Reference(
+      this.node,
+      this.isAmbient ? AmbientImport : this.bestGuessOwningModule,
+    );
     ref.identifiers = [...this.identifiers];
     ref._alias = alias;
     return ref;
   }
 
   cloneWithNoIdentifiers(): Reference<T> {
-    const ref = new Reference(this.node, this.bestGuessOwningModule);
+    const ref = new Reference(
+      this.node,
+      this.isAmbient ? AmbientImport : this.bestGuessOwningModule,
+    );
     ref._alias = this._alias;
     ref.identifiers = [];
     return ref;

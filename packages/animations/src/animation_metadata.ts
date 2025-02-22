@@ -1,19 +1,26 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 /**
- * Represents a set of CSS styles for use in an animation style.
+ * Represents a set of CSS styles for use in an animation style as a generic.
  */
-export interface ɵStyleData { [key: string]: string|number; }
+export interface ɵStyleData {
+  [key: string]: string | number;
+}
+
+/**
+ * Represents a set of CSS styles for use in an animation style as a Map.
+ */
+export type ɵStyleDataMap = Map<string, string | number>;
 
 /**
  * Represents animation-step timing parameters for an animation step.
- * @see `animate()`
+ * @see {@link animate}
  *
  * @publicApi
  */
@@ -23,12 +30,12 @@ export declare type AnimateTimings = {
    * such as "1s" or "10ms" for one second and 10 milliseconds, respectively.
    * The default unit is milliseconds.
    */
-  duration: number,
+  duration: number;
   /**
    * The delay in applying an animation step. A number and optional time unit.
    * The default unit is milliseconds.
    */
-  delay: number,
+  delay: number;
   /**
    * An easing style that controls how an animations step accelerates
    * and decelerates during its run time. An easing function such as `cubic-bezier()`,
@@ -37,7 +44,7 @@ export declare type AnimateTimings = {
    * - `ease-out`
    * - `ease-in-and-out`
    */
-  easing: string | null
+  easing: string | null;
 };
 
 /**
@@ -65,23 +72,25 @@ export declare interface AnimationOptions {
    * and 10 milliseconds, respectively.The default unit is milliseconds.
    * Default value is 0, meaning no delay.
    */
-  delay?: number|string;
+  delay?: number | string;
   /**
-  * A set of developer-defined parameters that modify styling and timing
-  * when an animation action starts. An array of key-value pairs, where the provided value
-  * is used as a default.
-  */
+   * A set of developer-defined parameters that modify styling and timing
+   * when an animation action starts. An array of key-value pairs, where the provided value
+   * is used as a default.
+   */
   params?: {[name: string]: any};
 }
 
 /**
  * Adds duration options to control animation styling and timing for a child animation.
  *
- * @see `animateChild()`
+ * @see {@link animateChild}
  *
  * @publicApi
  */
-export declare interface AnimateChildOptions extends AnimationOptions { duration?: number|string; }
+export declare interface AnimateChildOptions extends AnimationOptions {
+  duration?: number | string;
+}
 
 /**
  * @description Constants for the categories of parameters that can be defined for animations.
@@ -91,10 +100,10 @@ export declare interface AnimateChildOptions extends AnimationOptions { duration
  *
  * @publicApi
  */
-export const enum AnimationMetadataType {
+export enum AnimationMetadataType {
   /**
    * Associates a named animation state with a set of CSS styles.
-   * See `state()`
+   * See [`state()`](api/animations/state)
    */
   State = 0,
   /**
@@ -156,7 +165,7 @@ export const enum AnimationMetadataType {
    * Contains data for staggering an animation sequence.
    * See `stagger()`
    */
-  Stagger = 12
+  Stagger = 12,
 }
 
 /**
@@ -171,7 +180,9 @@ export const AUTO_STYLE = '*';
  *
  * @publicApi
  */
-export interface AnimationMetadata { type: AnimationMetadataType; }
+export interface AnimationMetadata {
+  type: AnimationMetadataType;
+}
 
 /**
  * Contains an animation trigger. Instantiated and returned by the
@@ -181,8 +192,8 @@ export interface AnimationMetadata { type: AnimationMetadataType; }
  */
 export interface AnimationTriggerMetadata extends AnimationMetadata {
   /**
-    * The trigger name, used to associate it with an element. Unique within the component.
-    */
+   * The trigger name, used to associate it with an element. Unique within the component.
+   */
   name: string;
   /**
    * An animation definition object, containing an array of state and transition declarations.
@@ -193,12 +204,12 @@ export interface AnimationTriggerMetadata extends AnimationMetadata {
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: {params?: {[name: string]: any}}|null;
+  options: {params?: {[name: string]: any}} | null;
 }
 
 /**
  * Encapsulates an animation state by associating a state name with a set of CSS styles.
- * Instantiated and returned by the `state()` function.
+ * Instantiated and returned by the [`state()`](api/animations/state) function.
  *
  * @publicApi
  */
@@ -229,19 +240,24 @@ export interface AnimationTransitionMetadata extends AnimationMetadata {
   /**
    * An expression that describes a state change.
    */
-  expr: string|
-      ((fromState: string, toState: string, element?: any,
-        params?: {[key: string]: any}) => boolean);
+  expr:
+    | string
+    | ((
+        fromState: string,
+        toState: string,
+        element?: any,
+        params?: {[key: string]: any},
+      ) => boolean);
   /**
    * One or more animation objects to which this transition applies.
    */
-  animation: AnimationMetadata|AnimationMetadata[];
+  animation: AnimationMetadata | AnimationMetadata[];
   /**
    * An options object containing a delay and
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: AnimationOptions|null;
+  options: AnimationOptions | null;
 }
 
 /**
@@ -255,13 +271,13 @@ export interface AnimationReferenceMetadata extends AnimationMetadata {
   /**
    *  One or more animation step objects.
    */
-  animation: AnimationMetadata|AnimationMetadata[];
+  animation: AnimationMetadata | AnimationMetadata[];
   /**
    * An options object containing a delay and
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: AnimationOptions|null;
+  options: AnimationOptions | null;
 }
 
 /**
@@ -278,11 +294,11 @@ export interface AnimationQueryMetadata extends AnimationMetadata {
   /**
    * One or more animation step objects.
    */
-  animation: AnimationMetadata|AnimationMetadata[];
+  animation: AnimationMetadata | AnimationMetadata[];
   /**
    * A query options object.
    */
-  options: AnimationQueryOptions|null;
+  options: AnimationQueryOptions | null;
 }
 
 /**
@@ -308,11 +324,11 @@ export interface AnimationStyleMetadata extends AnimationMetadata {
   /**
    * A set of CSS style properties.
    */
-  styles: '*'|{[key: string]: string | number}|Array<{[key: string]: string | number}|'*'>;
+  styles: '*' | {[key: string]: string | number} | Array<{[key: string]: string | number} | '*'>;
   /**
    * A percentage of the total animate time at which the style is to be applied.
    */
-  offset: number|null;
+  offset: number | null;
 }
 
 /**
@@ -325,11 +341,11 @@ export interface AnimationAnimateMetadata extends AnimationMetadata {
   /**
    * The timing data for the step.
    */
-  timings: string|number|AnimateTimings;
+  timings: string | number | AnimateTimings;
   /**
    * A set of styles used in the step.
    */
-  styles: AnimationStyleMetadata|AnimationKeyframesSequenceMetadata|null;
+  styles: AnimationStyleMetadata | AnimationKeyframesSequenceMetadata | null;
 }
 
 /**
@@ -344,7 +360,7 @@ export interface AnimationAnimateChildMetadata extends AnimationMetadata {
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: AnimationOptions|null;
+  options: AnimationOptions | null;
 }
 
 /**
@@ -363,7 +379,7 @@ export interface AnimationAnimateRefMetadata extends AnimationMetadata {
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: AnimationOptions|null;
+  options: AnimationOptions | null;
 }
 
 /**
@@ -382,7 +398,7 @@ export interface AnimationSequenceMetadata extends AnimationMetadata {
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: AnimationOptions|null;
+  options: AnimationOptions | null;
 }
 
 /**
@@ -401,7 +417,7 @@ export interface AnimationGroupMetadata extends AnimationMetadata {
    * developer-defined parameters that provide styling defaults and
    * can be overridden on invocation. Default delay is 0.
    */
-  options: AnimationOptions|null;
+  options: AnimationOptions | null;
 }
 
 /**
@@ -436,21 +452,21 @@ export interface AnimationStaggerMetadata extends AnimationMetadata {
   /**
    * The timing data for the steps.
    */
-  timings: string|number;
+  timings: string | number;
   /**
    * One or more animation steps.
    */
-  animation: AnimationMetadata|AnimationMetadata[];
+  animation: AnimationMetadata | AnimationMetadata[];
 }
 
 /**
- * Creates a named animation trigger, containing a  list of `state()`
+ * Creates a named animation trigger, containing a  list of [`state()`](api/animations/state)
  * and `transition()` entries to be evaluated when the expression
  * bound to the trigger changes.
  *
  * @param name An identifying string.
- * @param definitions  An animation definition object, containing an array of `state()`
- * and `transition()` declarations.
+ * @param definitions  An animation definition object, containing an array of
+ * [`state()`](api/animations/state) and `transition()` declarations.
  *
  * @return An object that encapsulates the trigger data.
  *
@@ -472,7 +488,7 @@ export interface AnimationStaggerMetadata extends AnimationMetadata {
  * The provided animation value is expected to be an array consisting of state and
  * transition declarations.
  *
- * ```typescript
+ * ```ts
  * @Component({
  *   selector: "my-component",
  *   templateUrl: "my-component-tpl.html",
@@ -502,7 +518,7 @@ export interface AnimationStaggerMetadata extends AnimationMetadata {
  * The `transition` animation method also supports reading an inline function which can decide
  * if its associated animation should be run.
  *
- * ```typescript
+ * ```ts
  * // this method is run each time the `myAnimationTrigger` trigger value changes.
  * function myInlineMatcherFn(fromState: string, toState: string, element: any, params: {[key:
  string]: any}): boolean {
@@ -535,7 +551,7 @@ export interface AnimationStaggerMetadata extends AnimationMetadata {
  *
  * The following example shows how to use this feature:
  *
- * ```typescript
+ * ```angular-ts
  * @Component({
  *   selector: 'my-component',
  *   template: `
@@ -564,7 +580,7 @@ export interface AnimationStaggerMetadata extends AnimationMetadata {
  * This means that you can disable all animations for an app
  * by placing a host binding set on `@.disabled` on the topmost Angular component.
  *
- * ```typescript
+ * ```ts
  * import {Component, HostBinding} from '@angular/core';
  *
  * @Component({
@@ -638,24 +654,25 @@ export function trigger(name: string, definitions: AnimationMetadata[]): Animati
  * **Style examples**
  *
  * The following example calls `style()` to set a single CSS style.
- * ```typescript
+ * ```ts
  * animate(500, style({ background: "red" }))
  * ```
  * The following example calls `keyframes()` to set a CSS style
  * to different values for successive keyframes.
- * ```typescript
+ * ```ts
  * animate(500, keyframes(
  *  [
- *   style({ background: "blue" })),
- *   style({ background: "red" }))
+ *   style({ background: "blue" }),
+ *   style({ background: "red" })
  *  ])
  * ```
  *
  * @publicApi
  */
 export function animate(
-    timings: string | number, styles: AnimationStyleMetadata | AnimationKeyframesSequenceMetadata |
-        null = null): AnimationAnimateMetadata {
+  timings: string | number,
+  styles: AnimationStyleMetadata | AnimationKeyframesSequenceMetadata | null = null,
+): AnimationAnimateMetadata {
   return {type: AnimationMetadataType.Animate, styles, timings};
 }
 
@@ -669,7 +686,7 @@ export function animate(
  * `keyframes()`, or use `animate()` calls with a delay value.
  * For example:
  *
- * ```typescript
+ * ```ts
  * group([
  *   animate("1s", style({ background: "black" })),
  *   animate("2s", style({ color: "white" }))
@@ -693,7 +710,9 @@ export function animate(
  * @publicApi
  */
 export function group(
-    steps: AnimationMetadata[], options: AnimationOptions | null = null): AnimationGroupMetadata {
+  steps: AnimationMetadata[],
+  options: AnimationOptions | null = null,
+): AnimationGroupMetadata {
   return {type: AnimationMetadataType.Group, steps, options};
 }
 
@@ -705,9 +724,9 @@ export function group(
  * - Steps defined by `animate()` calls apply the styling data over time
  *   as specified by the timing data.
  *
- * ```typescript
+ * ```ts
  * sequence([
- *   style({ opacity: 0 })),
+ *   style({ opacity: 0 }),
  *   animate("1s", style({ opacity: 1 }))
  * ])
  * ```
@@ -721,7 +740,8 @@ export function group(
  * @usageNotes
  * When you pass an array of steps to a
  * `transition()` call, the steps run sequentially by default.
- * Compare this to the `{@link animations/group group()}` call, which runs animation steps in parallel.
+ * Compare this to the `{@link animations/group group()}` call, which runs animation steps in
+ *parallel.
  *
  * When a sequence is used within a `{@link animations/group group()}` or a `transition()` call,
  * execution continues to the next instruction only after each of the inner animation
@@ -729,15 +749,17 @@ export function group(
  *
  * @publicApi
  **/
-export function sequence(steps: AnimationMetadata[], options: AnimationOptions | null = null):
-    AnimationSequenceMetadata {
+export function sequence(
+  steps: AnimationMetadata[],
+  options: AnimationOptions | null = null,
+): AnimationSequenceMetadata {
   return {type: AnimationMetadataType.Sequence, steps, options};
 }
 
 /**
  * Declares a key/value object containing CSS properties/styles that
- * can then be used for an animation `state`, within an animation `sequence`,
- * or as styling data for calls to `animate()` and `keyframes()`.
+ * can then be used for an animation [`state`](api/animations/state), within an animation
+ *`sequence`, or as styling data for calls to `animate()` and `keyframes()`.
  *
  * @param tokens A set of CSS styles or HTML styles associated with an animation state.
  * The value can be any of the following:
@@ -755,7 +777,7 @@ export function sequence(steps: AnimationMetadata[], options: AnimationOptions |
  * The following examples create animation styles that collect a set of
  * CSS property values:
  *
- * ```typescript
+ * ```ts
  * // string values for CSS properties
  * style({ background: "red", color: "blue" })
  *
@@ -763,10 +785,10 @@ export function sequence(steps: AnimationMetadata[], options: AnimationOptions |
  * style({ width: 100, height: 0 })
  * ```
  *
- * The following example uses auto-styling to allow a component to animate from
- * a height of 0 up to the height of the parent element:
+ * The following example uses auto-styling to allow an element to animate from
+ * a height of 0 up to its full height:
  *
- * ```
+ * ```ts
  * style({ height: 0 }),
  * animate("1s", style({ height: "*" }))
  * ```
@@ -774,8 +796,8 @@ export function sequence(steps: AnimationMetadata[], options: AnimationOptions |
  * @publicApi
  **/
 export function style(
-    tokens: '*' | {[key: string]: string | number} |
-    Array<'*'|{[key: string]: string | number}>): AnimationStyleMetadata {
+  tokens: '*' | {[key: string]: string | number} | Array<'*' | {[key: string]: string | number}>,
+): AnimationStyleMetadata {
   return {type: AnimationMetadataType.Style, styles: tokens, offset: null};
 }
 
@@ -809,8 +831,10 @@ export function style(
  * @publicApi
  **/
 export function state(
-    name: string, styles: AnimationStyleMetadata,
-    options?: {params: {[name: string]: any}}): AnimationStateMetadata {
+  name: string,
+  styles: AnimationStyleMetadata,
+  options?: {params: {[name: string]: any}},
+): AnimationStateMetadata {
   return {type: AnimationMetadataType.State, name, styles, options};
 }
 
@@ -835,7 +859,7 @@ export function state(
  * when each `backgroundColor` value is applied. The color is red at the start, and changes to
  * blue when 20% of the total time has elapsed.
  *
- * ```typescript
+ * ```ts
  * // the provided offset values
  * animate("5s", keyframes([
  *   style({ backgroundColor: "red", offset: 0 }),
@@ -848,7 +872,7 @@ export function state(
  * If there are no `offset` values specified in the style entries, the offsets
  * are calculated automatically.
  *
- * ```typescript
+ * ```ts
  * animate("5s", keyframes([
  *   style({ backgroundColor: "red" }) // offset = 0
  *   style({ backgroundColor: "blue" }) // offset = 0.33
@@ -864,178 +888,163 @@ export function keyframes(steps: AnimationStyleMetadata[]): AnimationKeyframesSe
 }
 
 /**
- * Declares an animation transition as a sequence of animation steps to run when a given
- * condition is satisfied. The condition is a Boolean expression or function that compares
- * the previous and current animation states, and returns true if this transition should occur.
- * When the state criteria of a defined transition are met, the associated animation is
- * triggered.
+ * Declares an animation transition which is played when a certain specified condition is met.
  *
- * @param stateChangeExpr A Boolean expression or function that compares the previous and current
- * animation states, and returns true if this transition should occur. Note that  "true" and "false"
- * match 1 and 0, respectively. An expression is evaluated each time a state change occurs in the
- * animation trigger element.
- * The animation steps run when the expression evaluates to true.
+ * @param stateChangeExpr A string with a specific format or a function that specifies when the
+ * animation transition should occur (see [State Change Expression](#state-change-expression)).
  *
- * - A state-change string takes the form "state1 => state2", where each side is a defined animation
- * state, or an asterix (*) to refer to a dynamic start or end state.
- *   - The expression string can contain multiple comma-separated statements;
- * for example "state1 => state2, state3 => state4".
- *   - Special values `:enter` and `:leave` initiate a transition on the entry and exit states,
- * equivalent to  "void => *"  and "* => void".
- *   - Special values `:increment` and `:decrement` initiate a transition when a numeric value has
- * increased or decreased in value.
- * - A function is executed each time a state change occurs in the animation trigger element.
- * The animation steps run when the function returns true.
+ * @param steps One or more animation objects that represent the animation's instructions.
  *
- * @param steps One or more animation objects, as returned by the `animate()` or
- * `sequence()` function, that form a transformation from one state to another.
- * A sequence is used by default when you pass an array.
- * @param options An options object that can contain a delay value for the start of the animation,
- * and additional developer-defined parameters. Provided values for additional parameters are used
- * as defaults, and override values can be passed to the caller on invocation.
+ * @param options An options object that can be used to specify a delay for the animation or provide
+ * custom parameters for it.
+ *
  * @returns An object that encapsulates the transition data.
  *
  * @usageNotes
- * The template associated with a component binds an animation trigger to an element.
  *
- * ```HTML
- * <!-- somewhere inside of my-component-tpl.html -->
- * <div [@myAnimationTrigger]="myStatusExp">...</div>
- * ```
+ * ### State Change Expression
  *
- * All transitions are defined within an animation trigger,
- * along with named states that the transitions change to and from.
+ * The State Change Expression instructs Angular when to run the transition's animations, it can
+ *either be
+ *  - a string with a specific syntax
+ *  - or a function that compares the previous and current state (value of the expression bound to
+ *    the element's trigger) and returns `true` if the transition should occur or `false` otherwise
  *
- * ```typescript
- * trigger("myAnimationTrigger", [
- *  // define states
- *  state("on", style({ background: "green" })),
- *  state("off", style({ background: "grey" })),
- *  ...]
- * ```
+ * The string format can be:
+ *  - `fromState => toState`, which indicates that the transition's animations should occur then the
+ *    expression bound to the trigger's element goes from `fromState` to `toState`
  *
- * Note that when you call the `sequence()` function within a `{@link animations/group group()}`
- * or a `transition()` call, execution does not continue to the next instruction
- * until each of the inner animation steps have completed.
+ *    _Example:_
+ *      ```ts
+ *        transition('open => closed', animate('.5s ease-out', style({ height: 0 }) ))
+ *      ```
  *
- * ### Syntax examples
+ *  - `fromState <=> toState`, which indicates that the transition's animations should occur then
+ *    the expression bound to the trigger's element goes from `fromState` to `toState` or vice versa
  *
- * The following examples define transitions between the two defined states (and default states),
- * using various options:
+ *    _Example:_
+ *      ```ts
+ *        transition('enabled <=> disabled', animate('1s cubic-bezier(0.8,0.3,0,1)'))
+ *      ```
  *
- * ```typescript
- * // Transition occurs when the state value
- * // bound to "myAnimationTrigger" changes from "on" to "off"
- * transition("on => off", animate(500))
- * // Run the same animation for both directions
- * transition("on <=> off", animate(500))
- * // Define multiple state-change pairs separated by commas
- * transition("on => off, off => void", animate(500))
- * ```
+ *  - `:enter`/`:leave`, which indicates that the transition's animations should occur when the
+ *    element enters or exists the DOM
  *
- * ### Special values for state-change expressions
+ *    _Example:_
+ *      ```ts
+ *        transition(':enter', [
+ *          style({ opacity: 0 }),
+ *          animate('500ms', style({ opacity: 1 }))
+ *        ])
+ *      ```
  *
- * - Catch-all state change for when an element is inserted into the page and the
- * destination state is unknown:
+ *  - `:increment`/`:decrement`, which indicates that the transition's animations should occur when
+ *    the numerical expression bound to the trigger's element has increased in value or decreased
  *
- * ```typescript
- * transition("void => *", [
- *  style({ opacity: 0 }),
- *  animate(500)
- *  ])
- * ```
+ *    _Example:_
+ *      ```ts
+ *        transition(':increment', query('@counter', animateChild()))
+ *      ```
  *
- * - Capture a state change between any states:
+ *  - a sequence of any of the above divided by commas, which indicates that transition's animations
+ *    should occur whenever one of the state change expressions matches
  *
- *  `transition("* => *", animate("1s 0s"))`
+ *    _Example:_
+ *      ```ts
+ *        transition(':increment, * => enabled, :enter', animate('1s ease', keyframes([
+ *          style({ transform: 'scale(1)', offset: 0}),
+ *          style({ transform: 'scale(1.1)', offset: 0.7}),
+ *          style({ transform: 'scale(1)', offset: 1})
+ *        ]))),
+ *      ```
  *
- * - Entry and exit transitions:
+ * Also note that in such context:
+ *  - `void` can be used to indicate the absence of the element
+ *  - asterisks can be used as wildcards that match any state
+ *  - (as a consequence of the above, `void => *` is equivalent to `:enter` and `* => void` is
+ *    equivalent to `:leave`)
+ *  - `true` and `false` also match expression values of `1` and `0` respectively (but do not match
+ *    _truthy_ and _falsy_ values)
  *
- * ```typescript
- * transition(":enter", [
- *   style({ opacity: 0 }),
- *   animate(500, style({ opacity: 1 }))
- *   ]),
- * transition(":leave", [
- *   animate(500, style({ opacity: 0 }))
- *   ])
- * ```
+ * <div class="docs-alert docs-alert-helpful">
  *
- * - Use `:increment` and `:decrement` to initiate transitions:
+ *  Be careful about entering end leaving elements as their transitions present a common
+ *  pitfall for developers.
  *
- * ```typescript
- * transition(":increment", group([
- *  query(':enter', [
- *     style({ left: '100%' }),
- *     animate('0.5s ease-out', style('*'))
- *   ]),
- *  query(':leave', [
- *     animate('0.5s ease-out', style({ left: '-100%' }))
- *  ])
- * ]))
+ *  Note that when an element with a trigger enters the DOM its `:enter` transition always
+ *  gets executed, but its `:leave` transition will not be executed if the element is removed
+ *  alongside its parent (as it will be removed "without warning" before its transition has
+ *  a chance to be executed, the only way that such transition can occur is if the element
+ *  is exiting the DOM on its own).
  *
- * transition(":decrement", group([
- *  query(':enter', [
- *     style({ left: '100%' }),
- *     animate('0.5s ease-out', style('*'))
- *   ]),
- *  query(':leave', [
- *     animate('0.5s ease-out', style({ left: '-100%' }))
- *  ])
- * ]))
- * ```
  *
- * ### State-change functions
+ * </div>
  *
- * Here is an example of a `fromState` specified as a state-change function that invokes an
- * animation when true:
- *
- * ```typescript
- * transition((fromState, toState) =>
- *  {
- *   return fromState == "off" && toState == "on";
- *  },
- *  animate("1s 0s"))
- * ```
- *
- * ### Animating to the final state
+ * ### Animating to a Final State
  *
  * If the final step in a transition is a call to `animate()` that uses a timing value
- * with no style data, that step is automatically considered the final animation arc,
- * for the element to reach the final state. Angular automatically adds or removes
+ * with no `style` data, that step is automatically considered the final animation arc,
+ * for the element to reach the final state, in such case Angular automatically adds or removes
  * CSS styles to ensure that the element is in the correct final state.
  *
- * The following example defines a transition that starts by hiding the element,
- * then makes sure that it animates properly to whatever state is currently active for trigger:
  *
- * ```typescript
- * transition("void => *", [
- *   style({ opacity: 0 }),
- *   animate(500)
- *  ])
- * ```
- * ### Boolean value matching
- * If a trigger binding value is a Boolean, it can be matched using a transition expression
- * that compares true and false or 1 and 0. For example:
+ * ### Usage Examples
  *
- * ```
- * // in the template
- * <div [@openClose]="open ? true : false">...</div>
- * // in the component metadata
- * trigger('openClose', [
- *   state('true', style({ height: '*' })),
- *   state('false', style({ height: '0px' })),
- *   transition('false <=> true', animate(500))
- * ])
- * ```
+ *  - Transition animations applied based on
+ *    the trigger's expression value
+ *
+ *   ```html
+ *   <div [@myAnimationTrigger]="myStatusExp">
+ *    ...
+ *   </div>
+ *   ```
+ *
+ *   ```ts
+ *   trigger("myAnimationTrigger", [
+ *     ..., // states
+ *     transition("on => off, open => closed", animate(500)),
+ *     transition("* <=> error", query('.indicator', animateChild()))
+ *   ])
+ *   ```
+ *
+ *  - Transition animations applied based on custom logic dependent
+ *    on the trigger's expression value and provided parameters
+ *
+ *    ```html
+ *    <div [@myAnimationTrigger]="{
+ *     value: stepName,
+ *     params: { target: currentTarget }
+ *    }">
+ *     ...
+ *    </div>
+ *    ```
+ *
+ *    ```ts
+ *    trigger("myAnimationTrigger", [
+ *      ..., // states
+ *      transition(
+ *        (fromState, toState, _element, params) =>
+ *          ['firststep', 'laststep'].includes(fromState.toLowerCase())
+ *          && toState === params?.['target'],
+ *        animate('1s')
+ *      )
+ *    ])
+ *    ```
  *
  * @publicApi
  **/
 export function transition(
-    stateChangeExpr: string | ((fromState: string, toState: string, element?: any,
-                                params?: {[key: string]: any}) => boolean),
-    steps: AnimationMetadata | AnimationMetadata[],
-    options: AnimationOptions | null = null): AnimationTransitionMetadata {
+  stateChangeExpr:
+    | string
+    | ((
+        fromState: string,
+        toState: string,
+        element?: any,
+        params?: {[key: string]: any},
+      ) => boolean),
+  steps: AnimationMetadata | AnimationMetadata[],
+  options: AnimationOptions | null = null,
+): AnimationTransitionMetadata {
   return {type: AnimationMetadataType.Transition, expr: stateChangeExpr, animation: steps, options};
 }
 
@@ -1056,7 +1065,7 @@ export function transition(
  * The following example defines a reusable animation, providing some default parameter
  * values.
  *
- * ```typescript
+ * ```ts
  * var fadeAnimation = animation([
  *   style({ opacity: '{{ start }}' }),
  *   animate('{{ time }}',
@@ -1085,8 +1094,9 @@ export function transition(
  * @publicApi
  */
 export function animation(
-    steps: AnimationMetadata | AnimationMetadata[],
-    options: AnimationOptions | null = null): AnimationReferenceMetadata {
+  steps: AnimationMetadata | AnimationMetadata[],
+  options: AnimationOptions | null = null,
+): AnimationReferenceMetadata {
   return {type: AnimationMetadataType.Reference, animation: steps, options};
 }
 
@@ -1109,8 +1119,9 @@ export function animation(
  *
  * @publicApi
  */
-export function animateChild(options: AnimateChildOptions | null = null):
-    AnimationAnimateChildMetadata {
+export function animateChild(
+  options: AnimateChildOptions | null = null,
+): AnimationAnimateChildMetadata {
   return {type: AnimationMetadataType.AnimateChild, options};
 }
 
@@ -1125,8 +1136,9 @@ export function animateChild(options: AnimateChildOptions | null = null):
  * @publicApi
  */
 export function useAnimation(
-    animation: AnimationReferenceMetadata,
-    options: AnimationOptions | null = null): AnimationAnimateRefMetadata {
+  animation: AnimationReferenceMetadata,
+  options: AnimationOptions | null = null,
+): AnimationAnimateRefMetadata {
   return {type: AnimationMetadataType.AnimateRef, animation, options};
 }
 
@@ -1136,7 +1148,9 @@ export function useAnimation(
  *
  * @param selector The element to query, or a set of elements that contain Angular-specific
  * characteristics, specified with one or more of the following tokens.
- *  - `query(":enter")` or `query(":leave")` : Query for newly inserted/removed elements.
+ *  - `query(":enter")` or `query(":leave")` : Query for newly inserted/removed elements (not
+ *     all elements can be queried via these tokens, see
+ *     [Entering and Leaving Elements](#entering-and-leaving-elements))
  *  - `query(":animating")` : Query all currently animating elements.
  *  - `query("@triggerName")` : Query elements that contain an animation trigger.
  *  - `query("@*")` : Query all elements that contain an animation triggers.
@@ -1149,9 +1163,12 @@ export function useAnimation(
  * @return An object that encapsulates the query data.
  *
  * @usageNotes
+ *
+ * ### Multiple Tokens
+ *
  * Tokens can be merged into a combined query selector string. For example:
  *
- * ```typescript
+ * ```ts
  *  query(':self, .record:enter, .record:leave, @subTrigger', [...])
  * ```
  *
@@ -1176,12 +1193,40 @@ export function useAnimation(
  * ], { optional: true })
  * ```
  *
+ * ### Entering and Leaving Elements
+ *
+ * Not all elements can be queried via the `:enter` and `:leave` tokens, the only ones
+ * that can are those that Angular assumes can enter/leave based on their own logic
+ * (if their insertion/removal is simply a consequence of that of their parent they
+ * should be queried via a different token in their parent's `:enter`/`:leave` transitions).
+ *
+ * The only elements Angular assumes can enter/leave based on their own logic (thus the only
+ * ones that can be queried via the `:enter` and `:leave` tokens) are:
+ *  - Those inserted dynamically (via `ViewContainerRef`)
+ *  - Those that have a structural directive (which, under the hood, are a subset of the above ones)
+ *
+ * <div class="docs-alert docs-alert-helpful">
+ *
+ *  Note that elements will be successfully queried via `:enter`/`:leave` even if their
+ *  insertion/removal is not done manually via `ViewContainerRef`or caused by their structural
+ *  directive (e.g. they enter/exit alongside their parent).
+ *
+ * </div>
+ *
+ * <div class="docs-alert docs-alert-important">
+ *
+ *  There is an exception to what previously mentioned, besides elements entering/leaving based on
+ *  their own logic, elements with an animation trigger can always be queried via `:leave` when
+ * their parent is also leaving.
+ *
+ * </div>
+ *
  * ### Usage Example
  *
  * The following example queries for inner elements and animates them
- * individually using `animate()`. 
+ * individually using `animate()`.
  *
- * ```typescript
+ * ```angular-ts
  * @Component({
  *   selector: 'inner',
  *   template: `
@@ -1218,8 +1263,10 @@ export function useAnimation(
  * @publicApi
  */
 export function query(
-    selector: string, animation: AnimationMetadata | AnimationMetadata[],
-    options: AnimationQueryOptions | null = null): AnimationQueryMetadata {
+  selector: string,
+  animation: AnimationMetadata | AnimationMetadata[],
+  options: AnimationQueryOptions | null = null,
+): AnimationQueryMetadata {
   return {type: AnimationMetadataType.Query, selector, animation, options};
 }
 
@@ -1254,7 +1301,7 @@ export function query(
  *
  * Here is the component code:
  *
- * ```typescript
+ * ```ts
  * import {trigger, transition, style, animate, query, stagger} from '@angular/animations';
  * @Component({
  *   templateUrl: 'list.component.html',
@@ -1283,7 +1330,7 @@ export function query(
  *
  * Here is the animation trigger code:
  *
- * ```typescript
+ * ```ts
  * trigger('listAnimation', [
  *   transition('* => *', [ // each time the binding value changes
  *     query(':leave', [
@@ -1304,7 +1351,8 @@ export function query(
  * @publicApi
  */
 export function stagger(
-    timings: string | number,
-    animation: AnimationMetadata | AnimationMetadata[]): AnimationStaggerMetadata {
+  timings: string | number,
+  animation: AnimationMetadata | AnimationMetadata[],
+): AnimationStaggerMetadata {
   return {type: AnimationMetadataType.Stagger, timings, animation};
 }

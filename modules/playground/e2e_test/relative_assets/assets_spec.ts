@@ -1,14 +1,13 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import {$, ExpectedConditions, browser, by, element} from 'protractor';
-
-import {verifyNoBrowserErrors} from '../../../e2e_util/e2e_util';
+import {verifyNoBrowserErrors} from '@angular/build-tooling/bazel/benchmark/driver-utilities';
+import {$, browser, by, element, ExpectedConditions} from 'protractor';
 
 function waitForElement(selector: string) {
   // Waits for the element with id 'abc' to be present on the dom.
@@ -16,7 +15,6 @@ function waitForElement(selector: string) {
 }
 
 describe('relative assets relative-app', () => {
-
   afterEach(verifyNoBrowserErrors);
 
   const URL = '/';
@@ -34,7 +32,9 @@ describe('relative assets relative-app', () => {
     waitForElement('my-cmp .inner-container');
     const elem = element(by.css('my-cmp .inner-container'));
     const width = browser.executeScript(
-        (e: Element) => parseInt(window.getComputedStyle(e).width), elem.getWebElement());
+      (e: Element) => parseInt(window.getComputedStyle(e).width),
+      elem.getWebElement(),
+    );
 
     expect(width).toBe(432);
   });

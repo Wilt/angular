@@ -1,48 +1,54 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import {Component, Inject, Injectable, InjectionToken, NgModule, forwardRef, inject} from '@angular/core';
+import {
+  Component,
+  forwardRef,
+  Inject,
+  inject,
+  Injectable,
+  InjectionToken,
+  NgModule,
+} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {ServerModule} from '@angular/platform-server';
 
-export interface IService { readonly dep: {readonly data: string;}; }
+export interface IService {
+  readonly dep: {readonly data: string};
+}
 
 @NgModule({})
-export class TokenModule {
-}
+export class TokenModule {}
 
 export const TOKEN = new InjectionToken('test', {
   providedIn: TokenModule,
   factory: () => new Service(inject(Dep)),
 });
 
-
 @Component({
   selector: 'token-app',
   template: '{{data}}',
+  standalone: false,
 })
 export class AppComponent {
   data: string;
-  constructor(@Inject(TOKEN) service: IService) { this.data = service.dep.data; }
+  constructor(@Inject(TOKEN) service: IService) {
+    this.data = service.dep.data;
+  }
 }
 
 @NgModule({
-  imports: [
-    BrowserModule.withServerTransition({appId: 'id-app'}),
-    ServerModule,
-    TokenModule,
-  ],
+  imports: [BrowserModule, ServerModule, TokenModule],
   providers: [forwardRef(() => Dep)],
   declarations: [AppComponent],
   bootstrap: [AppComponent],
 })
-export class TokenAppModule {
-}
+export class TokenAppModule {}
 
 @Injectable()
 export class Dep {

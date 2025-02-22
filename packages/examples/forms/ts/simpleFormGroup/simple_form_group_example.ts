@@ -1,9 +1,9 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 /* tslint:disable:no-console  */
@@ -15,15 +15,16 @@ import {FormControl, FormGroup, Validators} from '@angular/forms';
   selector: 'example-app',
   template: `
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div *ngIf="first.invalid"> Name is too short. </div>
+      <div *ngIf="first.invalid">Name is too short.</div>
 
-      <input formControlName="first" placeholder="First name">
-      <input formControlName="last" placeholder="Last name">
+      <input formControlName="first" placeholder="First name" />
+      <input formControlName="last" placeholder="Last name" />
 
       <button type="submit">Submit</button>
-   </form>
-   <button (click)="setValue()">Set preset value</button>
+    </form>
+    <button (click)="setValue()">Set preset value</button>
   `,
+  standalone: false,
 })
 export class SimpleFormGroup {
   form = new FormGroup({
@@ -31,14 +32,17 @@ export class SimpleFormGroup {
     last: new FormControl('Drew'),
   });
 
-  get first(): any { return this.form.get('first'); }
-
-  onSubmit(): void {
-    console.log(this.form.value);  // {first: 'Nancy', last: 'Drew'}
+  get first(): any {
+    return this.form.get('first');
   }
 
-  setValue() { this.form.setValue({first: 'Carson', last: 'Drew'}); }
-}
+  onSubmit(): void {
+    console.log(this.form.value); // {first: 'Nancy', last: 'Drew'}
+  }
 
+  setValue() {
+    this.form.setValue({first: 'Carson', last: 'Drew'});
+  }
+}
 
 // #enddocregion

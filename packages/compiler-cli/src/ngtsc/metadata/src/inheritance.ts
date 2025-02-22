@@ -1,14 +1,16 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
 import {Reference} from '../../imports';
-import {DirectiveMeta, MetadataReader} from '../../metadata';
 import {ClassDeclaration} from '../../reflection';
+
+import {DirectiveMeta, HostDirectiveMeta, InputMapping, MetadataReader} from './api';
+import {ClassPropertyMapping, ClassPropertyName} from './property_mapping';
 
 /**
  * Given a reference to a directive, return a flattened version of its `DirectiveMeta` metadata
@@ -19,15 +21,26 @@ import {ClassDeclaration} from '../../reflection';
  * followed.
  */
 export function flattenInheritedDirectiveMetadata(
-    reader: MetadataReader, dir: Reference<ClassDeclaration>): DirectiveMeta {
+  reader: MetadataReader,
+  dir: Reference<ClassDeclaration>,
+): DirectiveMeta | null {
   const topMeta = reader.getDirectiveMetadata(dir);
   if (topMeta === null) {
-    throw new Error(`Metadata not found for directive: ${dir.debugName}`);
+    return null;
+  }
+  if (topMeta.baseClass === null) {
+    return topMeta;
   }
 
-  let inputs: {[key: string]: string | [string, string]} = {};
-  let outputs: {[key: string]: string} = {};
+  const coercedInputFields = new Set<ClassPropertyName>();
+  const undeclaredInputFields = new Set<ClassPropertyName>();
+  const restrictedInputFields = new Set<ClassPropertyName>();
+  const stringLiteralInputFields = new Set<ClassPropertyName>();
+  let hostDirectives: HostDirectiveMeta[] | null = null;
   let isDynamic = false;
+  let inputs = ClassPropertyMapping.empty<InputMapping>();
+  let outputs = ClassPropertyMapping.empty();
+  let isStructural: boolean = false;
 
   const addMetadata = (meta: DirectiveMeta): void => {
     if (meta.baseClass === 'dynamic') {
@@ -41,8 +54,28 @@ export function flattenInheritedDirectiveMetadata(
         isDynamic = true;
       }
     }
-    inputs = {...inputs, ...meta.inputs};
-    outputs = {...outputs, ...meta.outputs};
+
+    isStructural = isStructural || meta.isStructural;
+
+    inputs = ClassPropertyMapping.merge(inputs, meta.inputs);
+    outputs = ClassPropertyMapping.merge(outputs, meta.outputs);
+
+    for (const coercedInputField of meta.coercedInputFields) {
+      coercedInputFields.add(coercedInputField);
+    }
+    for (const undeclaredInputField of meta.undeclaredInputFields) {
+      undeclaredInputFields.add(undeclaredInputField);
+    }
+    for (const restrictedInputField of meta.restrictedInputFields) {
+      restrictedInputFields.add(restrictedInputField);
+    }
+    for (const field of meta.stringLiteralInputFields) {
+      stringLiteralInputFields.add(field);
+    }
+    if (meta.hostDirectives !== null && meta.hostDirectives.length > 0) {
+      hostDirectives ??= [];
+      hostDirectives.push(...meta.hostDirectives);
+    }
   };
 
   addMetadata(topMeta);
@@ -51,6 +84,12 @@ export function flattenInheritedDirectiveMetadata(
     ...topMeta,
     inputs,
     outputs,
+    coercedInputFields,
+    undeclaredInputFields,
+    restrictedInputFields,
+    stringLiteralInputFields,
     baseClass: isDynamic ? 'dynamic' : null,
+    isStructural,
+    hostDirectives,
   };
 }

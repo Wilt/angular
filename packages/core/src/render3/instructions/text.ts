@@ -1,62 +1,111 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
-import {assertDataInRange, assertDefined, assertEqual} from '../../util/assert';
-import {TNodeType} from '../interfaces/node';
-import {RText, isProceduralRenderer} from '../interfaces/renderer';
-import {BINDING_INDEX, HEADER_OFFSET, LView, RENDERER, TVIEW, T_HOST} from '../interfaces/view';
-import {appendChild, createTextNode} from '../node_manipulation';
-import {getLView, getSelectedIndex, setIsNotParent} from '../state';
-import {NO_CHANGE} from '../tokens';
-import {renderStringify} from '../util/misc_utils';
-import {getNativeByIndex} from '../util/view_utils';
-
-import {bind} from './property';
-import {getOrCreateTNode, textBindingInternal} from './shared';
-
-
+import {validateMatchingNode} from '../../hydration/error_handling';
+import {locateNextRNode} from '../../hydration/node_lookup_utils';
+import {isDisconnectedNode, markRNodeAsClaimedByHydration} from '../../hydration/utils';
+import {isDetachedByI18n} from '../../i18n/utils';
+import {assertEqual, assertIndexInRange} from '../../util/assert';
+import {TElementNode, TNode, TNodeType} from '../interfaces/node';
+import {RText} from '../interfaces/renderer_dom';
+import {HEADER_OFFSET, HYDRATION, LView, RENDERER, TView} from '../interfaces/view';
+import {appendChild} from '../node_manipulation';
+import {createTextNode} from '../dom_node_manipulation';
+import {
+  getBindingIndex,
+  getLView,
+  getTView,
+  isInSkipHydrationBlock,
+  lastNodeWasCreated,
+  setCurrentTNode,
+  wasLastNodeCreated,
+} from '../state';
+import {getOrCreateTNode} from '../tnode_manipulation';
 
 /**
  * Create static text node
  *
  * @param index Index of the node in the data array
- * @param value Value to write. This value will be stringified.
+ * @param value Static string value to write.
  *
  * @codeGenApi
  */
-export function ɵɵtext(index: number, value?: any): void {
+export function ɵɵtext(index: number, value: string = ''): void {
   const lView = getLView();
-  ngDevMode && assertEqual(
-                   lView[BINDING_INDEX], lView[TVIEW].bindingStartIndex,
-                   'text nodes should be created before any bindings');
-  ngDevMode && ngDevMode.rendererCreateTextNode++;
-  ngDevMode && assertDataInRange(lView, index + HEADER_OFFSET);
-  const textNative = lView[index + HEADER_OFFSET] = createTextNode(value, lView[RENDERER]);
-  ngDevMode && ngDevMode.rendererSetText++;
-  const tNode = getOrCreateTNode(lView[TVIEW], lView[T_HOST], index, TNodeType.Element, null, null);
+  const tView = getTView();
+  const adjustedIndex = index + HEADER_OFFSET;
+
+  ngDevMode &&
+    assertEqual(
+      getBindingIndex(),
+      tView.bindingStartIndex,
+      'text nodes should be created before any bindings',
+    );
+  ngDevMode && assertIndexInRange(lView, adjustedIndex);
+
+  const tNode = tView.firstCreatePass
+    ? getOrCreateTNode(tView, adjustedIndex, TNodeType.Text, value, null)
+    : (tView.data[adjustedIndex] as TElementNode);
+
+  const textNative = _locateOrCreateTextNode(tView, lView, tNode, value, index);
+  lView[adjustedIndex] = textNative;
+
+  if (wasLastNodeCreated()) {
+    appendChild(tView, lView, textNative, tNode);
+  }
 
   // Text nodes are self closing.
-  setIsNotParent();
-  appendChild(textNative, tNode, lView);
+  setCurrentTNode(tNode, false);
 }
 
+let _locateOrCreateTextNode: typeof locateOrCreateTextNodeImpl = (
+  tView: TView,
+  lView: LView,
+  tNode: TNode,
+  value: string,
+  index: number,
+) => {
+  lastNodeWasCreated(true);
+  return createTextNode(lView[RENDERER], value);
+};
+
 /**
- * Create text node with binding
- * Bindings should be handled externally with the proper interpolation(1-8) method
- *
- * @param value Stringified value to write.
- *
- * @codeGenApi
+ * Enables hydration code path (to lookup existing elements in DOM)
+ * in addition to the regular creation mode of text nodes.
  */
-export function ɵɵtextBinding<T>(value: T | NO_CHANGE): void {
-  const lView = getLView();
-  const index = getSelectedIndex();
-  const bound = bind(lView, value);
-  if (bound !== NO_CHANGE) {
-    textBindingInternal(lView, index, renderStringify(bound));
+function locateOrCreateTextNodeImpl(
+  tView: TView,
+  lView: LView,
+  tNode: TNode,
+  value: string,
+  index: number,
+): RText {
+  const hydrationInfo = lView[HYDRATION];
+  const isNodeCreationMode =
+    !hydrationInfo ||
+    isInSkipHydrationBlock() ||
+    isDetachedByI18n(tNode) ||
+    isDisconnectedNode(hydrationInfo, index);
+  lastNodeWasCreated(isNodeCreationMode);
+
+  // Regular creation mode.
+  if (isNodeCreationMode) {
+    return createTextNode(lView[RENDERER], value);
   }
+
+  // Hydration mode, looking up an existing element in DOM.
+  const textNative = locateNextRNode(hydrationInfo, tView, lView, tNode) as RText;
+
+  ngDevMode && validateMatchingNode(textNative, Node.TEXT_NODE, null, lView, tNode);
+  ngDevMode && markRNodeAsClaimedByHydration(textNative);
+
+  return textNative;
+}
+
+export function enableLocateOrCreateTextNodeImpl() {
+  _locateOrCreateTextNode = locateOrCreateTextNodeImpl;
 }
